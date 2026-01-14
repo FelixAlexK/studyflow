@@ -1,8 +1,8 @@
-import { createAuthClient } from "better-auth/vue";
 import { convexClient } from "@convex-dev/better-auth/client/plugins";
+import { createAuthClient } from "better-auth/vue";
 
 export const authClient = createAuthClient({
-    plugins: [convexClient()],
+	plugins: [convexClient()],
 });
 
 export const { signIn, signOut, signUp, useSession } = authClient;
