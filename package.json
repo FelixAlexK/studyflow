@@ -1,0 +1,26 @@
+{
+	"name": "vite-project",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"lint": "pnpm exec biome check",
+		"lint:fix": "pnpm lint --write"
+	},
+	"dependencies": {
+		"vue": "^3.5.24"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.11",
+		"@vitejs/plugin-vue": "^6.0.1",
+		"vite": "npm:rolldown-vite@7.2.5"
+	},
+	"pnpm": {
+		"overrides": {
+			"vite": "npm:rolldown-vite@7.2.5"
+		}
+	}
+}
