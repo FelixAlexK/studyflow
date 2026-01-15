@@ -1,14 +1,12 @@
 import { createRouter, createWebHistory,  type RouteRecordRaw } from 'vue-router'
 
-import DashboardView from './pages/DashboardPage.vue'
-import DemoView from './pages/DemoPage.vue'
 import { useSession } from './lib/auth-client'
 
 const routes: RouteRecordRaw[]  = [
   {
     path: '/dashboards/:username',
     name: 'dashboard',
-    component: DashboardView,
+    component: () => import('./pages/DashboardPage.vue'),
     props: true,
   },
   {
@@ -18,7 +16,7 @@ const routes: RouteRecordRaw[]  = [
   },
   {
     path: '/',
-    component: DashboardView,
+    component: () => import('./pages/DashboardPage.vue'),
     beforeEnter: (_to, _from, next) => {
       const session = useSession();
       const name = session.value.data?.user?.name;
@@ -29,7 +27,8 @@ const routes: RouteRecordRaw[]  = [
       }
     },
   },
-  { path: '/demo', component: DemoView },
+  { path: '/demo', component: () => import('./pages/DemoPage.vue') },
+  { path: '/calendar', component: () => import('./pages/CalendarPage.vue') },
 ]
 
 export const router = createRouter({
