@@ -1,366 +1,233 @@
-Welcome to your new TanStack app! 
+# StudyFlow
 
-# Getting Started
+A productivity and study management app built with React, TanStack Router, Convex, and WorkOS authentication.
 
-To run this application:
+## Features
 
-```bash
-pnpm install
-pnpm dev
+- **📋 Task Management** - Create, edit, and track tasks with due dates
+- **📅 Calendar** - Visual calendar with event scheduling
+- **⏱️ Pomodoro Timer** - Focus timer with customizable work/break intervals
+- **📊 Productivity Dashboard** - Track completed tasks, focus sessions, and total focus time
+- **🔔 Smart Reminders** - Configurable task reminders with in-app notifications
+- **🎨 Modern UI** - Built with shadcn/ui and Tailwind CSS
+- **🔐 Secure Authentication** - WorkOS SSO integration
+- **⚡ Real-time Updates** - Powered by Convex backend
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm (or npm)
+- Convex account ([convex.dev](https://convex.dev))
+- WorkOS account ([workos.com](https://workos.com))
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd studyflow
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your Convex and WorkOS credentials
+   ```
+
+4. **Start development server**
+   ```bash
+   pnpm dev
+   ```
+
+   This will:
+   - Start Convex backend (runs `npx convex dev`)
+   - Start Vite dev server on `http://localhost:3000`
+
+## Project Structure
+
+```
+src/
+├── routes/              # TanStack Router file-based routes
+│   ├── __root.tsx      # Root layout with sidebar
+│   ├── index.tsx       # Dashboard page
+│   ├── _authed/        # Protected routes
+│   │   ├── tasks.tsx   # Task management
+│   │   ├── calendar.tsx # Calendar view
+│   │   └── pomodoro.tsx # Focus timer
+│   └── auth.tsx        # Authentication pages
+├── components/         # React components
+│   ├── TaskList.tsx    # Task CRUD interface
+│   ├── CalendarComponent.tsx # FullCalendar integration
+│   ├── PomodoroTimer.tsx # Focus timer with persistence
+│   ├── ProductivityOverview.tsx # Stats dashboard
+│   ├── ReminderChecker.tsx # Background reminder checker
+│   ├── ErrorBoundary.tsx # Error handling
+│   └── ui/             # shadcn/ui components
+├── lib/                # Utilities
+└── styles.css          # Global styles
+
+convex/
+├── schema.ts           # Database schema (tasks, events, focusSessions)
+├── tasks.ts            # Task queries and mutations
+├── events.ts           # Calendar event functions
+├── stats.ts            # Productivity statistics
+└── reminders.ts        # Reminder management
 ```
 
-# Building For Production
+## Tech Stack
 
-To build this application for production:
+- **Frontend**: React 19, TypeScript, TanStack Router, TanStack Query
+- **Backend**: Convex (serverless backend-as-a-service)
+- **Auth**: WorkOS AuthKit
+- **UI**: shadcn/ui, Tailwind CSS, Radix UI
+- **Calendar**: FullCalendar
+- **Build**: Vite, TypeScript
+- **Deployment**: Vercel/Railway/Render/Docker
+
+## Development
+
+### Available Scripts
 
 ```bash
-npm run build
+pnpm dev          # Start dev server with Convex
+pnpm dev:web      # Start only Vite dev server
+pnpm dev:convex   # Start only Convex dev
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Lint code with Biome
+pnpm format       # Format code with Biome
 ```
+
+### Code Quality
+
+This project uses [Biome](https://biomejs.dev/) for linting and formatting:
+
+```bash
+pnpm lint         # Check for issues
+pnpm format       # Auto-fix formatting
+pnpm check        # Run both lint and format
+```
+
+## Architecture
+
+### Authentication Flow
+
+1. User accesses protected route under `/tasks`, `/calendar`, or `/pomodoro`
+2. Redirected to WorkOS authentication via `_authed.tsx` loader
+3. After successful login, user session stored via WorkOS AuthKit
+4. All Convex queries automatically scoped to authenticated user
+
+### Data Flow
+
+```
+UI Component → Convex Query/Mutation → Convex Database
+     ↓              (Real-time)              ↓
+ Auto-Update ←  Convex Subscription  ← Data Change
+```
+
+All data fetching uses Convex's real-time subscriptions via `useQuery`:
+
+```tsx
+const tasks = useQuery(api.tasks.getTasks);  // Auto-updates on changes
+```
+
+### Route Structure
+
+- `/` - Dashboard with productivity overview
+- `/tasks` - Task management (protected)
+- `/calendar` - Calendar view (protected)  
+- `/pomodoro` - Focus timer (protected)
+- `/auth` - Authentication pages
+
+All protected routes require WorkOS authentication via the `_authed` layout.
 
 ## Production Deployment
 
-StudyFlow is designed for easy deployment to production. See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions.
-
-### Quick Start - Production
-
-1. **Environment Setup**: Copy `.env.example` to your deployment platform and fill in production values:
-   ```bash
-   cp .env.example .env.local  # For local testing
-   ```
-   See [ENV_SETUP.md](./ENV_SETUP.md) for detailed environment variable documentation.
-
-2. **Choose Deployment Platform**:
-   - **Vercel** (Recommended): See [vercel.json](./vercel.json)
-   - **Railway**: Use included [docker-compose.yml](./docker-compose.yml)
-   - **Render**: Use included [Dockerfile](./Dockerfile)
-   - **Docker/Self-Hosted**: Use [Dockerfile](./Dockerfile)
-
-3. **Deploy**:
-   - Vercel: Connect GitHub repo to Vercel dashboard
-   - Railway/Render: Connect GitHub repo to platform
-   - Docker: `docker build -t studyflow . && docker run ...`
-
-### Before Production
-
-- [ ] Read [DEPLOYMENT.md](./DEPLOYMENT.md) for complete setup
-- [ ] Follow [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
-- [ ] Set up environment variables in deployment platform
-- [ ] Test locally: `npm run build && npm start`
-- [ ] Verify build succeeds: `npm run build`
-
-### Production Build Process
+Build and deploy to production:
 
 ```bash
-# Install dependencies
-npm install
-
-# Build for production (includes Vite and TypeScript checking)
-npm run build
-
-# Start production server
-npm start
+pnpm build    # Build frontend + validate backend
+pnpm start    # Start production server
 ```
 
-The production build includes:
-- Frontend optimization via Vite
-- TypeScript type checking
-- Convex backend schema validation
-- Server-side rendering setup
+### Deployment Options
 
-### Deployment Guides
+1. **Vercel** (Recommended) - See [DEPLOYMENT.md](DEPLOYMENT.md)
+2. **Railway** - PostgreSQL-ready with docker-compose.yml
+3. **Render** - Dockerfile included
+4. **Docker** - Full containerization support
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete production deployment guide
-- **[ENV_SETUP.md](./ENV_SETUP.md)** - Environment variables reference
-- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Pre-launch checklist
+### Pre-Deployment Checklist
 
+- Set environment variables (see [ENV_SETUP.md](ENV_SETUP.md))
+- Test locally: `pnpm build && pnpm start`
+- Verify Convex deployment: Check Convex dashboard
+- Configure WorkOS production credentials
 
+See [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) for 5-minute setup guide.
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+## Component Usage
 
-```bash
-pnpm test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-pnpm lint
-pnpm format
-pnpm check
-```
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpm dlx shadcn@latest add button
-```
-
-
-
-## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add another a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+### Adding a Task
 
 ```tsx
-import { Link } from "@tanstack/react-router";
-```
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
-Then anywhere in your JSX you can use it like so:
+const createTask = useMutation(api.tasks.createTask);
 
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
+// Create a task with reminder
+await createTask({
+  title: "Study session",
+  dueDate: new Date().toISOString(),
+  reminderBefore: 15, // 15 minutes before
 });
 ```
 
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
+### Reading Productivity Stats
 
-### React-Query
+```tsx
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
+const stats = useQuery(api.stats.getProductivityStats);
+// Returns: { completedTasks, focusSessions, totalMinutes }
+```
 
-First add your dependencies:
+### Using Pomodoro Timer
+
+The timer persists state to localStorage:
+
+```tsx
+import { PomodoroTimer } from "@/components/PomodoroTimer";
+
+<PomodoroTimer />
+// Default: 25 min work, 5 min break
+// Automatically tracks sessions in Convex
+```
+
+## Adding shadcn/ui Components
+
+Install new UI components as needed:
 
 ```bash
-pnpm add @tanstack/react-query @tanstack/react-query-devtools
+pnpm dlx shadcn@latest add dropdown-menu
+pnpm dlx shadcn@latest add dialog
 ```
 
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
+All components are configured for Tailwind CSS v4 and Radix UI.
 
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+## Learn More
 
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-pnpm add @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+- [Convex Documentation](https://docs.convex.dev)
+- [TanStack Router](https://tanstack.com/router)
+- [WorkOS AuthKit](https://workos.com/docs/authkit)
+- [shadcn/ui Components](https://ui.shadcn.com)
+- [FullCalendar](https://fullcalendar.io/docs/react)
