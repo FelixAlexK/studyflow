@@ -19,4 +19,15 @@ export default defineSchema({
     color: v.optional(v.string()),
     allDay: v.optional(v.boolean()),
   }).index('by_user', ['userId']),
+  tasks: defineTable({
+    userId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    dueDate: v.string(), // ISO 8601 date string
+    status: v.union(
+      v.literal('todo'),
+      v.literal('in_progress'),
+      v.literal('done'),
+    ),
+  }).index('by_user', ['userId']),
 });
