@@ -39,6 +39,14 @@ export default defineSchema({
     reminderMinutesBefore: v.optional(v.number()), // e.g. 1440 for 1 day before
     reminderLastNotifiedAt: v.optional(v.string()), // ISO 8601 timestamp of last notification
   }).index('by_user', ['userId']),
+  submissions: defineTable({
+    userId: v.string(),
+    title: v.string(),
+    subject: v.string(),
+    dueDate: v.string(), // ISO 8601 datetime string
+    status: v.union(v.literal('open'), v.literal('done')),
+  }).index('by_user', ['userId'])
+    .index('by_subject', ['userId', 'subject']),
   focusSessions: defineTable({
     userId: v.string(),
     duration: v.number(), // in minutes
