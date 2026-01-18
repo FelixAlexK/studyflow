@@ -10,6 +10,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import type { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
+import NotificationCenter from "@/components/NotificationCenter";
+import { NotificationProvider } from "@/components/NotificationProvider";
+import ReminderChecker from "@/components/ReminderChecker";
 import appCssUrl from "../styles.css?url";
 
 const fetchWorkosAuth = createServerFn({ method: "GET" }).handler(async () => {
@@ -75,7 +78,11 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 				<HeadContent />
 			</head>
 			<body>
-				{children}
+				<NotificationProvider>
+					<ReminderChecker />
+					{children}
+					<NotificationCenter />
+				</NotificationProvider>
 				<Scripts />
 			</body>
 		</html>

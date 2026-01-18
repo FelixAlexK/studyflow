@@ -1,6 +1,6 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Bell, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ export default function TaskList() {
   const createTask = useConvexMutation(api.tasks.createTask);
   const updateTask = useConvexMutation(api.tasks.updateTask);
   const deleteTask = useConvexMutation(api.tasks.deleteTask);
+  const updateTaskReminder = useConvexMutation(api.reminders.updateTaskReminder);
 
   const [formValues, setFormValues] = useState({
     title: "",
@@ -43,6 +44,8 @@ export default function TaskList() {
     status: "todo" as Task["status"],
   });
   const [editError, setEditError] = useState<string | null>(null);
+  const [expandedReminderId, setExpandedReminderId] = useState<Id<"tasks"> | null>(null);
+  const [reminderMinutes, setReminderMinutes] = useState<Record<string, number>>({});
 
   const toISODate = (value: string) => new Date(`${value}T00:00:00`).toISOString();
   const toDateInputValue = (iso: string) => new Date(iso).toISOString().slice(0, 10);
@@ -288,6 +291,14 @@ export default function TaskList() {
                             <Button
                               size="icon"
                               variant="ghost"
+                              aria-label="Configure reminder"
+                              onClick={() => setExpandedReminderId(expandedReminderId === task._id ? null : task._id)}
+                            >
+                              <Bell className={`h-4 w-4 ${task.reminderEnabled ? "fill-current text-blue-600" : ""}`} />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               aria-label="Edit task"
                               onClick={() => {
                                 setEditingId(task._id);
@@ -319,6 +330,60 @@ export default function TaskList() {
                           <Separator orientation="vertical" className="h-4" />
                           <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
                         </div>
+                        {expandedReminderId === task._id && (
+                          <div className="mt-3 space-y-3 rounded-md border bg-muted/20 p-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                id={`reminder-${String(task._id)}`}
+                                type="checkbox"
+                                checked={task.reminderEnabled ?? false}
+                                onChange={async (e) => {
+                                  await updateTaskReminder({
+                                    taskId: task._id,
+                                    reminderEnabled: e.target.checked,
+                                  });
+                                  void refetch();
+                                }}
+                                className="h-4 w-4 rounded border-gray-300"
+                              />
+                              <label htmlFor={`reminder-${String(task._id)}`} className="text-sm font-medium">Enable reminder</label>
+                            </div>
+                            {task.reminderEnabled && (
+                              <div className="space-y-2">
+                                <label htmlFor={`reminder-minutes-${String(task._id)}`} className="text-xs font-medium">Notify me:</label>
+                                <select
+                                  id={`reminder-minutes-${String(task._id)}`}
+                                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
+                                  value={reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440}
+                                  onChange={(e) => {
+                                    const minutes = parseInt(e.target.value, 10);
+                                    setReminderMinutes((prev) => ({ ...prev, [String(task._id)]: minutes }));
+                                  }}
+                                >
+                                  <option value="60">1 hour before</option>
+                                  <option value="360">6 hours before</option>
+                                  <option value="1440">1 day before</option>
+                                  <option value="2880">2 days before</option>
+                                </select>
+                                <Button
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={async () => {
+                                    const minutes = reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440;
+                                    await updateTaskReminder({
+                                      taskId: task._id,
+                                      reminderMinutesBefore: minutes,
+                                    });
+                                    void refetch();
+                                    setExpandedReminderId(null);
+                                  }}
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
