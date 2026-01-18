@@ -10,6 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import type { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import NotificationCenter from "@/components/NotificationCenter";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import ReminderChecker from "@/components/ReminderChecker";
@@ -78,11 +79,13 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 				<HeadContent />
 			</head>
 			<body>
-				<NotificationProvider>
-					<ReminderChecker />
-					{children}
-					<NotificationCenter />
-				</NotificationProvider>
+				<ErrorBoundary>
+					<NotificationProvider>
+						<ReminderChecker />
+						{children}
+						<NotificationCenter />
+					</NotificationProvider>
+				</ErrorBoundary>
 				<Scripts />
 			</body>
 		</html>
