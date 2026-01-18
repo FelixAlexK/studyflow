@@ -1,8 +1,11 @@
-import { convexQuery } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { api } from "../../convex/_generated/api";
-import type { Doc } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
 
 const HORIZON_DAYS = 30;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -40,6 +43,24 @@ const typeStyles = {
   submission: "bg-amber-100 text-amber-800",
 } satisfies Record<string, string>;
 
+type Item =
+  | {
+      kind: "exam";
+      id: string;
+      title: string;
+      date: string;
+      meta?: string;
+      learningGoal?: string;
+    }
+  | {
+      kind: "submission";
+      id: string;
+      title: string;
+      date: string;
+      meta: string;
+      status: "open" | "done";
+    };
+
 export default function StressOverview() {
   const { data: exams = [] } = useSuspenseQuery(convexQuery(api.exams.listExams, {}));
   // Cast to any to allow compile before codegen picks up new Convex function
@@ -47,14 +68,20 @@ export default function StressOverview() {
   const { data: submissions = [] } = useSuspenseQuery(
     convexQuery(submissionsQuery, {}),
   );
+  const updateExam = useConvexMutation(api.exams.updateExam);
 
-  const items = [
+  const [learningGoals, setLearningGoals] = useState<Record<string, string>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const items: Item[] = [
     ...(exams as Doc<"exams">[]).map((exam) => ({
       kind: "exam" as const,
       id: String(exam._id),
       title: exam.subject,
       date: exam.dateTime,
       meta: exam.location ? `Ort: ${exam.location}` : undefined,
+      learningGoal: exam.learningGoal,
     })),
     ...(submissions as Doc<"submissions">[]).map((sub) => ({
       kind: "submission" as const,
@@ -100,6 +127,57 @@ export default function StressOverview() {
                   <div className="text-xs text-muted-foreground">{dateLabel}</div>
                   {item.meta && (
                     <div className="text-xs text-muted-foreground">{item.meta}</div>
+                  )}
+                  {isExam && (
+                    <div className="mt-1 space-y-2">
+                      <Input
+                        placeholder="Lernziel (z. B. Kapitel 1–5)"
+                        value={learningGoals[item.id] ?? item.learningGoal ?? ""}
+                        onChange={(e) =>
+                          setLearningGoals((prev) => ({ ...prev, [item.id]: e.target.value }))
+                        }
+                        disabled={savingId === item.id}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            setSaveError(null);
+                            setSavingId(item.id);
+                            try {
+                              const value = learningGoals[item.id] ?? "";
+                              await updateExam({
+                                examId: item.id as Id<"exams">,
+                                learningGoal: value.trim() || undefined,
+                              });
+                            } catch (err) {
+                              setSaveError("Speichern fehlgeschlagen. Bitte erneut versuchen.");
+                            } finally {
+                              setSavingId(null);
+                            }
+                          }}
+                          disabled={savingId === item.id}
+                        >
+                          Speichern
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setLearningGoals((prev) => ({
+                              ...prev,
+                              [item.id]: item.learningGoal ?? "",
+                            }))
+                          }
+                          disabled={savingId === item.id}
+                        >
+                          Zurücksetzen
+                        </Button>
+                      </div>
+                      {saveError && (
+                        <div className="text-xs text-destructive">{saveError}</div>
+                      )}
+                    </div>
                   )}
                   {item.kind === "submission" && item.status === "done" && (
                     <div className="text-[10px] font-semibold uppercase text-green-700">Erledigt</div>

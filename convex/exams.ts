@@ -26,6 +26,7 @@ export const createExam = mutation({
     subject: v.string(),
     dateTime: v.string(), // ISO 8601
     location: v.optional(v.string()),
+    learningGoal: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -42,6 +43,7 @@ export const createExam = mutation({
       subject,
       dateTime: args.dateTime,
       location: args.location?.trim() || undefined,
+      learningGoal: args.learningGoal?.trim() || undefined,
     });
   },
 });
@@ -53,6 +55,7 @@ export const updateExam = mutation({
     subject: v.optional(v.string()),
     dateTime: v.optional(v.string()),
     location: v.optional(v.string()),
+    learningGoal: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -80,6 +83,10 @@ export const updateExam = mutation({
 
     if (args.location !== undefined) {
       updates.location = args.location.trim() || undefined;
+    }
+
+    if (args.learningGoal !== undefined) {
+      updates.learningGoal = args.learningGoal.trim() || undefined;
     }
 
     await ctx.db.patch(args.examId, updates);
