@@ -16,19 +16,21 @@ import { api } from "../../convex/_generated/api";
 export const Route = createFileRoute("/")({
 	component: DashboardPage,
 	loader: async () => {
-	const { user} = await getAuth();
+		const { user } = await getAuth();
 
-	return { user };
-  },
+		return { user };
+	},
 });
 
 function DashboardPage() {
 	const { user } = useLoaderData({ from: "/" });
 
-	const { data: numbers } = useSuspenseQuery(convexQuery(api.myFunctions.listNumbers, {count: 10}));
+	const { data: numbers } = useSuspenseQuery(
+		convexQuery(api.myFunctions.listNumbers, { count: 10 }),
+	);
 
 	return (
-		<AppLayout  headerTitle={`Welcome, ${user?.firstName || "User"}`}>
+		<AppLayout headerTitle={`Welcome, ${user?.firstName || "User"}`}>
 			<div className="space-y-6">
 				<div>
 					<h2 className="text-2xl font-bold tracking-tight">
@@ -80,5 +82,5 @@ function DashboardPage() {
 				</Card>
 			</div>
 		</AppLayout>
-	)
+	);
 }

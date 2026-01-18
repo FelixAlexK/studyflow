@@ -7,15 +7,13 @@ import {
 	useAccessToken,
 	useAuth,
 } from "@workos/authkit-tanstack-react-start/client";
-import {
-	ConvexProviderWithAuth,
-	ConvexReactClient,
-} from "convex/react";
+import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { useCallback, useMemo } from "react";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
-	const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
+	// Support both client (import.meta.env) and server (process.env) contexts
+	const CONVEX_URL = import.meta.env.VITE_CONVEX_URL || (typeof process !== 'undefined' ? process.env.VITE_CONVEX_URL : undefined);
 	if (!CONVEX_URL) {
 		throw new Error("missing VITE_CONVEX_URL env var");
 	}
