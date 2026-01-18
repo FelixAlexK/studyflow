@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedTasksRouteImport } from './routes/_authed/tasks'
 import { Route as AuthedCalendarRouteImport } from './routes/_authed/calendar'
 
 const CallbackRoute = CallbackRouteImport.update({
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedTasksRoute = AuthedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedCalendarRoute = AuthedCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -38,11 +44,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/calendar': typeof AuthedCalendarRoute
+  '/tasks': typeof AuthedTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/calendar': typeof AuthedCalendarRoute
+  '/tasks': typeof AuthedTasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +58,20 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/callback': typeof CallbackRoute
   '/_authed/calendar': typeof AuthedCalendarRoute
+  '/_authed/tasks': typeof AuthedTasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/callback' | '/calendar'
+  fullPaths: '/' | '/callback' | '/calendar' | '/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/callback' | '/calendar'
-  id: '__root__' | '/' | '/_authed' | '/callback' | '/_authed/calendar'
+  to: '/' | '/callback' | '/calendar' | '/tasks'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authed'
+    | '/callback'
+    | '/_authed/calendar'
+    | '/_authed/tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/tasks': {
+      id: '/_authed/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthedTasksRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/calendar': {
       id: '/_authed/calendar'
       path: '/calendar'
@@ -100,10 +122,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedCalendarRoute: typeof AuthedCalendarRoute
+  AuthedTasksRoute: typeof AuthedTasksRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCalendarRoute: AuthedCalendarRoute,
+  AuthedTasksRoute: AuthedTasksRoute,
 }
 
 const AuthedRouteWithChildren =

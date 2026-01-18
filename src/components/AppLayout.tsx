@@ -76,7 +76,7 @@ export default function AppLayout({
 		{
 			title: "Tasks",
 			icon: CheckSquare,
-			href: "/demo",
+			href: "/tasks",
 		},
 		{
 			title: "Calendar",
