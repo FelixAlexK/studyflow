@@ -2,7 +2,6 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
-import { useAuth } from "@workos-inc/authkit-react";
 import AppLayout from "@/components/AppLayout";
 import ProductivityOverview from "@/components/ProductivityOverview";
 import {
@@ -68,9 +67,14 @@ function DashboardPage() {
 								))}
 							</div>
 						) : (
-							<p className="text-sm text-muted-foreground">
-								No numbers yet. Start by creating your first number!
-							</p>
+							<div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
+								<div className="mb-2 text-sm text-muted-foreground">
+									You're all caught up!
+								</div>
+								<p className="text-xs text-muted-foreground">
+									Navigate to Tasks to manage your to-do items.
+								</p>
+							</div>
 						)}
 					</CardContent>
 				</Card>

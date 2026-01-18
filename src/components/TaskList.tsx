@@ -1,12 +1,13 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Bell, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 
@@ -153,20 +154,36 @@ export default function TaskList() {
         </div>
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading tasks...
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-md border p-3">
+                <Skeleton className="h-5 w-5 flex-shrink-0 rounded" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {isError && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-            Something went wrong loading tasks. Please retry.
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm">
+            <div className="font-medium text-destructive">Failed to load tasks</div>
+            <p className="mt-1 text-destructive/70">
+              Something went wrong. Please refresh the page or try again later.
+            </p>
           </div>
         )}
 
         {!isLoading && !isError && sorted.length === 0 && (
-          <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-            No tasks yet. Add a task to get started.
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-8 text-center">
+            <CheckCircle2 className="mb-3 h-12 w-12 text-muted-foreground/40" />
+            <h3 className="font-semibold text-muted-foreground">No tasks yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create a task above to get started tracking your work.
+            </p>
           </div>
         )}
 
