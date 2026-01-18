@@ -30,4 +30,9 @@ export default defineSchema({
       v.literal('done'),
     ),
   }).index('by_user', ['userId']),
+  focusSessions: defineTable({
+    userId: v.string(),
+    duration: v.number(), // in minutes
+    completedAt: v.string(), // ISO 8601 timestamp
+  }).index('by_user', ['userId']),
 });
