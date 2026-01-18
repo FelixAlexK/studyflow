@@ -1,0 +1,16 @@
+{
+  "name": "studyflow",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".output",
+  "devCommand": "npm run dev",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "api/**": {
+      "memory": 3008,
+      "maxDuration": 60
+    }
+  },
+  "regions": ["iad1"]
+}
