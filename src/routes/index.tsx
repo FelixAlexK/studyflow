@@ -4,6 +4,7 @@ import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
 import ProductivityOverview from "@/components/ProductivityOverview";
+import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
 import {
 	Card,
@@ -41,6 +42,7 @@ function DashboardPage() {
 				</div>
 
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
+				{user?.id ? <StressOverview /> : null}
 
 				<div>
 					<h3 className="mb-4 text-lg font-semibold">Your Progress</h3>
