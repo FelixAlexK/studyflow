@@ -10,7 +10,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import type { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
-import AppLayout from "@/components/AppLayout";
 import appCssUrl from "../styles.css?url";
 
 const fetchWorkosAuth = createServerFn({ method: "GET" }).handler(async () => {
