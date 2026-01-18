@@ -42,7 +42,7 @@ export const hasCheckedInToday = query({
   },
 });
 
-// Create a learning check-in for today and increment progress
+// Create a learning check-in for today
 export const createCheckIn = mutation({
   args: {},
   handler: async (ctx) => {

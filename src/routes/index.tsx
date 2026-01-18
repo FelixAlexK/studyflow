@@ -3,11 +3,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
+import LearningCheckIns from "@/components/LearningCheckIns";
 import ProductivityOverview from "@/components/ProductivityOverview";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
-import LearningCheckIns from "@/components/LearningCheckIns";
-import LearningProgress from "@/components/LearningProgress";
 import {
 	Card,
 	CardContent,
@@ -45,7 +44,6 @@ function DashboardPage() {
 
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
 				{user?.id ? <StressOverview /> : null}
-				{user?.id ? <LearningProgress /> : null}
 				{user?.id ? <LearningCheckIns /> : null}
 
 				<div>
