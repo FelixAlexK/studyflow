@@ -20,6 +20,26 @@ const statusLabel: Record<Task["status"], string> = {
   done: "Done",
 };
 
+const getCountdownInfo = (dueDate: string) => {
+  const now = new Date();
+  const due = new Date(dueDate);
+  const daysLeft = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  const abs = Math.abs(daysLeft);
+  const label = daysLeft >= 0
+    ? `Noch ${daysLeft} Tag${daysLeft === 1 ? "" : "e"}`
+    : `Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
+
+  let colorClass = "bg-red-100 text-red-800";
+  if (daysLeft > 7) {
+    colorClass = "bg-green-100 text-green-800";
+  } else if (daysLeft >= 3) {
+    colorClass = "bg-amber-100 text-amber-800";
+  }
+
+  return { label, colorClass };
+};
+
 export default function TaskList() {
   const { data: tasks = [], isLoading, isError, refetch } = useQuery(
     convexQuery(api.tasks.listTasks, {}),
@@ -351,12 +371,20 @@ export default function TaskList() {
                             </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
                             <CheckCircle2 className="h-3 w-3" /> {statusLabel[task.status]}
                           </span>
                           <Separator orientation="vertical" className="h-4" />
                           <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                          {task.status !== "done" && (() => {
+                            const { label, colorClass } = getCountdownInfo(task.dueDate);
+                            return (
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${colorClass}`}>
+                                {label}
+                              </span>
+                            );
+                          })()}
                         </div>
                         {expandedReminderId === task._id && (
                           <div className="mt-3 space-y-3 rounded-md border bg-muted/20 p-3">

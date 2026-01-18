@@ -9,6 +9,7 @@
  */
 
 import type * as events from "../events.js";
+import type * as exams from "../exams.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as reminders from "../reminders.js";
 import type * as stats from "../stats.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   events: typeof events;
+  exams: typeof exams;
   myFunctions: typeof myFunctions;
   reminders: typeof reminders;
   stats: typeof stats;
