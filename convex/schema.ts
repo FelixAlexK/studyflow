@@ -25,6 +25,14 @@ export default defineSchema({
     parentEventId: v.optional(v.id('events')), // Reference to parent recurring event
   }).index('by_user', ['userId'])
     .index('by_parent', ['parentEventId']),
+  exams: defineTable({
+    userId: v.string(),
+    subject: v.string(),
+    // ISO 8601 datetime string representing exam start
+    dateTime: v.string(),
+    // Optional location/room
+    location: v.optional(v.string()),
+  }).index('by_user', ['userId']),
   tasks: defineTable({
     userId: v.string(),
     title: v.string(),
