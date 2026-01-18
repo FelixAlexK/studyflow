@@ -17,6 +17,16 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Accept build arguments for Vite environment variables
+ARG VITE_CONVEX_URL
+ARG VITE_CONVEX_SITE_URL
+ARG VITE_SITE_URL
+
+# Set environment variables for build
+ENV VITE_CONVEX_URL=${VITE_CONVEX_URL}
+ENV VITE_CONVEX_SITE_URL=${VITE_CONVEX_SITE_URL}
+ENV VITE_SITE_URL=${VITE_SITE_URL}
+
 # Build the application
 RUN npm run build
 

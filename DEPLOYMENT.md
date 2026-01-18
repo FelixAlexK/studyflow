@@ -59,14 +59,50 @@ git push origin main
 # 4. Done - auto-deploys on push
 ```
 
-### Railway / Render / Docker
+### Render
+
+**Easiest option** - Render automatically passes environment variables to build:
+
+1. Push code to GitHub
+2. Create new Web Service at https://render.com/dashboard
+3. Connect your GitHub repository
+4. Add all environment variables in the "Environment" tab:
+   - `VITE_CONVEX_URL`
+   - `VITE_CONVEX_SITE_URL`
+   - `VITE_SITE_URL`
+   - Plus all WorkOS variables (see table below)
+5. Build Command: `pnpm install && pnpm run build`
+6. Start Command: `pnpm start`
+7. Click Deploy
+
+### Railway / Docker
+
+For self-hosted or Docker deployments:
+
+1. Set environment variables before building
+2. Build: `docker build --build-arg VITE_CONVEX_URL=https://... .`
+3. Or set in Docker Compose/Railway dashboard
+4. Build Command: `pnpm install && pnpm run build`
+5. Start Command: `pnpm start`
+
+### ⚠️ Important: Vite Build-Time Variables
+
+Environment variables starting with `VITE_` **must be set before the build step**, not just at runtime.
+
+**On Render:** ✅ Handled automatically
+- Add variables to Environment tab
+- Render passes them during build
+
+**On Docker/Railway:** Must pass as build args
 ```bash
-# 1. Create account and connect GitHub
-# 2. Add environment variables
-# 3. Configure build: npm run build
-# 4. Configure start: npm start
-# 5. Deploy
+docker build \
+  --build-arg VITE_CONVEX_URL=https://... \
+  --build-arg VITE_CONVEX_SITE_URL=https://... \
+  --build-arg VITE_SITE_URL=https://... \
+  .
 ```
+
+**If missing:** You'll see error: `missing VITE_CONVEX_URL env var`
 
 ## Environment Variables
 
@@ -82,3 +118,27 @@ Copy `.env.example` to your deployment platform. Required variables:
 | `WORKOS_COOKIE_PASSWORD` | Random 32+ chars (secret) | `openssl rand -base64 24` |
 | `WORKOS_REDIRECT_URI` | OAuth redirect | `https://app.example.com/callback` |
 | `NODE_ENV` | Environment | `production` |
+
+## Fixing Build-Time Environment Variables
+
+If you see `Error: missing VITE_CONVEX_URL env var`:
+
+**On Render:**
+1. Go to Environment variables tab
+2. Make sure these are added:
+   - `VITE_CONVEX_URL`
+   - `VITE_CONVEX_SITE_URL`
+   - `VITE_SITE_URL`
+3. Reopen or redeploy the service
+
+**On Docker/Railway:**
+```bash
+# Pass as build arguments
+docker build \
+  --build-arg VITE_CONVEX_URL="https://xxx.convex.cloud" \
+  --build-arg VITE_CONVEX_SITE_URL="https://xxx.convex.site" \
+  --build-arg VITE_SITE_URL="https://yourapp.com" \
+  .
+```
+
+**Why:** Vite needs these at build time to embed them in the frontend bundle.
