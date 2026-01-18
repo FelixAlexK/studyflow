@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # Convex Configuration
+      CONVEX_DEPLOYMENT: ${CONVEX_DEPLOYMENT}
+      VITE_CONVEX_URL: ${VITE_CONVEX_URL}
+      VITE_CONVEX_SITE_URL: ${VITE_CONVEX_SITE_URL}
+      
+      # Frontend Configuration
+      VITE_SITE_URL: ${VITE_SITE_URL}
+      
+      # WorkOS Authentication
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID}
+      WORKOS_API_KEY: ${WORKOS_API_KEY}
+      WORKOS_COOKIE_PASSWORD: ${WORKOS_COOKIE_PASSWORD}
+      WORKOS_REDIRECT_URI: ${WORKOS_REDIRECT_URI}
+      
+      # Node Environment
+      NODE_ENV: production
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: Add a database or cache service
+# services:
+#   redis:
+#     image: redis:7-alpine
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_data:/data
+#     restart: unless-stopped
+# 
+# volumes:
+#   redis_data:

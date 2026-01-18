@@ -14,10 +14,66 @@ pnpm dev
 To build this application for production:
 
 ```bash
-pnpm build
+npm run build
 ```
 
-## Testing
+## Production Deployment
+
+StudyFlow is designed for easy deployment to production. See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions.
+
+### Quick Start - Production
+
+1. **Environment Setup**: Copy `.env.example` to your deployment platform and fill in production values:
+   ```bash
+   cp .env.example .env.local  # For local testing
+   ```
+   See [ENV_SETUP.md](./ENV_SETUP.md) for detailed environment variable documentation.
+
+2. **Choose Deployment Platform**:
+   - **Vercel** (Recommended): See [vercel.json](./vercel.json)
+   - **Railway**: Use included [docker-compose.yml](./docker-compose.yml)
+   - **Render**: Use included [Dockerfile](./Dockerfile)
+   - **Docker/Self-Hosted**: Use [Dockerfile](./Dockerfile)
+
+3. **Deploy**:
+   - Vercel: Connect GitHub repo to Vercel dashboard
+   - Railway/Render: Connect GitHub repo to platform
+   - Docker: `docker build -t studyflow . && docker run ...`
+
+### Before Production
+
+- [ ] Read [DEPLOYMENT.md](./DEPLOYMENT.md) for complete setup
+- [ ] Follow [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
+- [ ] Set up environment variables in deployment platform
+- [ ] Test locally: `npm run build && npm start`
+- [ ] Verify build succeeds: `npm run build`
+
+### Production Build Process
+
+```bash
+# Install dependencies
+npm install
+
+# Build for production (includes Vite and TypeScript checking)
+npm run build
+
+# Start production server
+npm start
+```
+
+The production build includes:
+- Frontend optimization via Vite
+- TypeScript type checking
+- Convex backend schema validation
+- Server-side rendering setup
+
+### Deployment Guides
+
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete production deployment guide
+- **[ENV_SETUP.md](./ENV_SETUP.md)** - Environment variables reference
+- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Pre-launch checklist
+
+
 
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
 

@@ -8,7 +8,6 @@ import {
 	useAuth,
 } from "@workos/authkit-tanstack-react-start/client";
 import {
-	ConvexProvider,
 	ConvexProviderWithAuth,
 	ConvexReactClient,
 } from "convex/react";

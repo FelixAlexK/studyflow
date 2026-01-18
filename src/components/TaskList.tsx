@@ -127,7 +127,7 @@ export default function TaskList() {
                 onChange={(e) => setFormValues((prev) => ({ ...prev, title: e.target.value }))}
               />
               <textarea
-                className="min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="min-h-18 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 placeholder="Description (optional)"
                 value={formValues.description}
                 onChange={(e) =>
@@ -168,7 +168,7 @@ export default function TaskList() {
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex items-start gap-3 rounded-md border p-3">
-                <Skeleton className="h-5 w-5 flex-shrink-0 rounded" />
+                <Skeleton className="h-5 w-5 shrink-0 rounded" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-3 w-2/3" />
@@ -222,7 +222,7 @@ export default function TaskList() {
                           }
                         />
                         <textarea
-                          className="min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          className="min-h-18 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           value={editValues.description}
                           onChange={(e) =>
                             setEditValues((prev) => ({ ...prev, description: e.target.value }))
