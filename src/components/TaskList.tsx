@@ -1,10 +1,11 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
-import { useMemo } from "react";
+import { CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
@@ -22,8 +23,56 @@ export default function TaskList() {
     convexQuery(api.tasks.listTasks, {}),
   );
 
+  const createTask = useConvexMutation(api.tasks.createTask);
   const updateTask = useConvexMutation(api.tasks.updateTask);
   const deleteTask = useConvexMutation(api.tasks.deleteTask);
+
+  const [formValues, setFormValues] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    status: "todo" as Task["status"],
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<Id<"tasks"> | null>(null);
+  const [editValues, setEditValues] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    status: "todo" as Task["status"],
+  });
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const toISODate = (value: string) => new Date(`${value}T00:00:00`).toISOString();
+  const toDateInputValue = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+
+  const handleCreate = async () => {
+    setFormError(null);
+
+    if (!formValues.title.trim()) {
+      setFormError("Title is required.");
+      return;
+    }
+
+    if (!formValues.dueDate) {
+      setFormError("Due date is required.");
+      return;
+    }
+
+    try {
+      await createTask({
+        title: formValues.title.trim(),
+        description: formValues.description.trim() || undefined,
+        dueDate: toISODate(formValues.dueDate),
+        status: formValues.status,
+      });
+      setFormValues({ title: "", description: "", dueDate: "", status: "todo" });
+      void refetch();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Failed to create task.");
+    }
+  };
 
   const handleToggleComplete = async (task: Task) => {
     const nextStatus = task.status === "done" ? "todo" : "done";
@@ -54,6 +103,52 @@ export default function TaskList() {
         <CardDescription>Track tasks, mark complete, and clear them out.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2 rounded-md border p-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex-1 space-y-2">
+              <Input
+                placeholder="Task title"
+                value={formValues.title}
+                onChange={(e) => setFormValues((prev) => ({ ...prev, title: e.target.value }))}
+              />
+              <textarea
+                className="min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Description (optional)"
+                value={formValues.description}
+                onChange={(e) =>
+                  setFormValues((prev) => ({ ...prev, description: e.target.value }))
+                }
+              />
+            </div>
+            <div className="w-full space-y-2 sm:w-64">
+              <Input
+                type="date"
+                value={formValues.dueDate}
+                onChange={(e) => setFormValues((prev) => ({ ...prev, dueDate: e.target.value }))}
+              />
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={formValues.status}
+                onChange={(e) =>
+                  setFormValues((prev) => ({ ...prev, status: e.target.value as Task["status"] }))
+              }
+              >
+                <option value="todo">To do</option>
+                <option value="in_progress">In progress</option>
+                <option value="done">Done</option>
+              </select>
+              <Button onClick={handleCreate} className="w-full">
+                Add Task
+              </Button>
+            </div>
+          </div>
+          {formError && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
+              {formError}
+            </div>
+          )}
+        </div>
+
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading tasks...
@@ -86,34 +181,146 @@ export default function TaskList() {
                     onCheckedChange={() => handleToggleComplete(task)}
                     aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
                   />
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>
-                          {task.title}
+                  <div className="flex-1 space-y-2">
+                    {editingId === task._id ? (
+                      <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                        <Input
+                          value={editValues.title}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({ ...prev, title: e.target.value }))
+                          }
+                        />
+                        <textarea
+                          className="min-h-[72px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          value={editValues.description}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({ ...prev, description: e.target.value }))
+                          }
+                        />
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                          <Input
+                            type="date"
+                            value={editValues.dueDate}
+                            onChange={(e) =>
+                              setEditValues((prev) => ({ ...prev, dueDate: e.target.value }))
+                            }
+                          />
+                          <select
+                            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            value={editValues.status}
+                            onChange={(e) =>
+                              setEditValues((prev) => ({
+                                ...prev,
+                                status: e.target.value as Task["status"],
+                              }))
+                            }
+                          >
+                            <option value="todo">To do</option>
+                            <option value="in_progress">In progress</option>
+                            <option value="done">Done</option>
+                          </select>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              onClick={async () => {
+                                setEditError(null);
+
+                                if (!editValues.title.trim()) {
+                                  setEditError("Title is required.");
+                                  return;
+                                }
+
+                                if (!editValues.dueDate) {
+                                  setEditError("Due date is required.");
+                                  return;
+                                }
+
+                                try {
+                                  await updateTask({
+                                    taskId: task._id,
+                                    title: editValues.title.trim(),
+                                    description: editValues.description.trim() || undefined,
+                                    dueDate: toISODate(editValues.dueDate),
+                                    status: editValues.status,
+                                  });
+                                  setEditingId(null);
+                                  void refetch();
+                                } catch (err) {
+                                  setEditError(
+                                    err instanceof Error ? err.message : "Failed to save task.",
+                                  );
+                                }
+                              }}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => setEditingId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {task.description}
-                          </p>
+                        {editError && (
+                          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
+                            {editError}
+                          </div>
                         )}
                       </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label="Delete task"
-                        onClick={() => handleDelete(task._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
-                        <CheckCircle2 className="h-3 w-3" /> {statusLabel[task.status]}
-                      </span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>
+                              {task.title}
+                            </div>
+                            {task.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {task.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label="Edit task"
+                              onClick={() => {
+                                setEditingId(task._id);
+                                setEditError(null);
+                                setEditValues({
+                                  title: task.title,
+                                  description: task.description ?? "",
+                                  dueDate: toDateInputValue(task.dueDate),
+                                  status: task.status,
+                                });
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label="Delete task"
+                              onClick={() => handleDelete(task._id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
+                            <CheckCircle2 className="h-3 w-3" /> {statusLabel[task.status]}
+                          </span>
+                          <Separator orientation="vertical" className="h-4" />
+                          <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               );
