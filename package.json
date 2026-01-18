@@ -1,43 +1,76 @@
 {
-	"name": "vite-project",
-	"private": true,
-	"version": "0.0.0",
-	"type": "module",
-	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite preview",
-		"lint": "pnpm exec biome check",
-		"lint:fix": "pnpm lint --write"
-	},
-	"dependencies": {
-		"@convex-dev/better-auth": "^0.10.10",
-		"@tailwindcss/vite": "^4.1.18",
-		"@vueuse/core": "^14.1.0",
-		"better-auth": "^1.4.12",
-		"class-variance-authority": "^0.7.1",
-		"clsx": "^2.1.1",
-		"convex": "^1.31.4",
-		"convex-vue": "^0.1.5",
-		"lucide-vue-next": "^0.562.0",
-		"reka-ui": "^2.7.0",
-		"tailwind-merge": "^3.4.0",
-		"tailwindcss": "^4.1.18",
-		"vue": "^3.5.24",
-		"vue-router": "^4.6.4"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "2.3.11",
-		"@types/node": "^25.0.8",
-		"@vitejs/plugin-vue": "^6.0.1",
-		"shadcn-vue": "^2.4.3",
-		"tw-animate-css": "^1.4.0",
-		"typescript": "^5.9.3",
-		"vite": "npm:rolldown-vite@7.2.5"
-	},
-	"pnpm": {
-		"overrides": {
-			"vite": "npm:rolldown-vite@7.2.5"
-		}
-	}
+  "name": "studyflow",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm dlx convex dev --once && concurrently -r pnpm:dev:web pnpm:dev:convex",
+    "dev:web": "vite dev --host",
+    "dev:ts": "tsc -b -w",
+    "dev:convex": "pnpm dlx convex dev",
+    "build": "vite build && tsc --noEmit",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@clerk/tanstack-react-start": "^0.27.15",
+    "@convex-dev/better-auth": "^0.10.10",
+    "@convex-dev/react-query": "^0.0.0-alpha.11",
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/react": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tanstack/react-query": "^5.89.0",
+    "@tanstack/react-router": "^1.132.2",
+    "@tanstack/react-router-ssr-query": "^1.151.2",
+    "@tanstack/react-router-with-query": "^1.130.17",
+    "@tanstack/react-start": "^1.132.2",
+    "@workos-inc/authkit-react": "^0.16.0",
+    "@workos/authkit-tanstack-react-start": "^0.5.0",
+    "@workos/mcp-docs-server": "^0.1.0",
+    "better-auth": "^1.4.9",
+    "class-variance-authority": "^0.7.1",
+    "convex": "^1.31.5",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "lucide-react": "^0.562.0",
+    "nitro": "3.0.1-alpha.1",
+    "react": "^19.2.1",
+    "react-day-picker": "^9.13.0",
+    "react-dom": "^19.2.1",
+    "server": "link:@clerk/tanstack-start/server",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.11",
+    "@tailwindcss/vite": "^4.1.13",
+    "@tanstack/devtools-vite": "^0.4.1",
+    "@tanstack/eslint-config": "^0.3.2",
+    "@tanstack/react-devtools": "^0.9.2",
+    "@tanstack/react-router-devtools": "^1.151.1",
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "clsx": "^2.1.1",
+    "concurrently": "~9.2.1",
+    "shadcn": "^3.7.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vite-tsconfig-paths": "^6.0.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@tailwindcss/oxide"
+    ]
+  }
 }
