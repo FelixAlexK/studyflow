@@ -1,7 +1,6 @@
 'use client';
 
 import { Link, useRouterState } from "@tanstack/react-router";
-import { type User } from "@workos/authkit-tanstack-react-start";
 import { useAuth } from "@workos/authkit-tanstack-react-start/client";
 import { Book, Calendar, CheckSquare, Home, Settings, Timer } from "lucide-react";
 import { type ReactNode, useState } from "react";
