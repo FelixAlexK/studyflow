@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getUserFriendlyMessage, logError } from "@/lib/error-handler";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 
@@ -74,19 +75,29 @@ export default function TaskList() {
       setFormValues({ title: "", description: "", dueDate: "", status: "todo" });
       void refetch();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Failed to create task.");
+      const message = getUserFriendlyMessage(err);
+      logError(err, "TaskList.handleCreate");
+      setFormError(message);
     }
   };
 
   const handleToggleComplete = async (task: Task) => {
-    const nextStatus = task.status === "done" ? "todo" : "done";
-    await updateTask({ taskId: task._id, status: nextStatus });
-    void refetch();
+    try {
+      const nextStatus = task.status === "done" ? "todo" : "done";
+      await updateTask({ taskId: task._id, status: nextStatus });
+      void refetch();
+    } catch (err) {
+      logError(err, "TaskList.handleToggleComplete");
+    }
   };
 
   const handleDelete = async (taskId: Id<"tasks">) => {
-    await deleteTask({ taskId });
-    void refetch();
+    try {
+      await deleteTask({ taskId });
+      void refetch();
+    } catch (err) {
+      logError(err, "TaskList.handleDelete");
+    }
   };
 
   const sorted = useMemo(
@@ -267,9 +278,9 @@ export default function TaskList() {
                                   setEditingId(null);
                                   void refetch();
                                 } catch (err) {
-                                  setEditError(
-                                    err instanceof Error ? err.message : "Failed to save task.",
-                                  );
+                                  const message = getUserFriendlyMessage(err);
+                                  logError(err, "TaskList.handleSaveEdit");
+                                  setEditError(message);
                                 }
                               }}
                             >
