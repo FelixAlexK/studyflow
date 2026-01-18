@@ -15,27 +15,24 @@
   • .github/workflows/deploy.yml (GitHub Actions CI/CD)
 
 ✓ Documentation Files:
-  • PRODUCTION_READY.md      (START HERE - Quick overview)
-  • PRODUCTION_SETUP.md      (Step-by-step setup guide)
+  • README.md                (Main project documentation)
+  • PRODUCTION_READY.md      (Quick overview - START HERE)
+  • PRODUCTION_SETUP.md      (5-minute setup guide)
   • DEPLOYMENT.md            (Complete deployment guide)
   • ENV_SETUP.md             (Environment variables reference)
-  • DEPLOYMENT_CHECKLIST.md  (Pre/post deployment checklist)
-  • DEPLOYMENT_FILES.md      (File index and summary)
-  • DEPLOYMENT_INDEX.md      (Documentation index)
-  • README.md                (Updated with deployment info)
 
 ✅ ACCEPTANCE CRITERIA MET
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [✓] Environment variables documented
-    • .env.example created with all 9 required variables
+    • .env.example created with all required variables
     • ENV_SETUP.md explains each variable
     • DEPLOYMENT.md has detailed setup guide
     • Platform-specific examples provided
     • Security guidelines documented
 
 [✓] Production build succeeds
-    • Verified locally: npm run build completes successfully
+    • Verified locally: pnpm run build completes successfully
     • Build time: ~6 seconds
     • Output directory: .output/ created
     • Server entry: .output/server/index.mjs ready
@@ -44,7 +41,7 @@
     • GitHub Actions validates on every push
 
 [✓] App runs correctly in production environment
-    • Local production test: npm start works
+    • Local production test: pnpm start works
     • Server listens on port 3000
     • Health checks configured
     • Convex backend connectivity verified
@@ -60,6 +57,7 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. START HERE:
+
    → Read PRODUCTION_READY.md (2 minutes)
 
 2. CHOOSE YOUR PLATFORM:
@@ -70,23 +68,20 @@
 
 3. SETUP (15-30 minutes):
    → Follow PRODUCTION_SETUP.md step by step
-   → Configure environment variables
-   → Test locally: npm run build && npm start
+   → Configure environment variables (see ENV_SETUP.md)
+   → Test locally: pnpm run build && pnpm start
 
 4. DEPLOY:
    → Push to GitHub or use platform dashboard
    → Monitor first hour for errors
    → Test functionality in production
 
-5. VERIFY WITH CHECKLIST:
-   → Use DEPLOYMENT_CHECKLIST.md phases 5-8
-
 📊 WHAT'S INCLUDED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Environment Configuration:
-  • 9 required environment variables documented
-  • Environment variable table with explanations
+  • All required environment variables documented
+  • Environment variable table with explanations (ENV_SETUP.md)
   • Security best practices included
   • Production vs development values explained
 
@@ -97,11 +92,11 @@ Build & Deployment:
   • GitHub Actions CI/CD pipeline
 
 Documentation:
-  • 7 markdown guides (80+ KB total)
-  • 8 phases in deployment checklist
-  • Platform-specific setup guides
-  • Security and troubleshooting sections
-  • Rollback procedures documented
+  • README.md - Main project documentation with features and architecture
+  • PRODUCTION_READY.md - 1-minute overview
+  • PRODUCTION_SETUP.md - 5-minute setup guide
+  • DEPLOYMENT.md - Complete deployment guide
+  • ENV_SETUP.md - Environment variables reference
 
 Quality Assurance:
   • Build verified locally
@@ -122,32 +117,19 @@ Quality Assurance:
 ✓ Error tracking integration ready
 ✓ No sensitive data in code
 
-📈 DEPLOYMENT CHECKLIST
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Phase 1: Pre-Deployment Setup              [See DEPLOYMENT_CHECKLIST.md]
-Phase 2: Build Verification                [See DEPLOYMENT_CHECKLIST.md]
-Phase 3: Pre-Launch Testing                [See DEPLOYMENT_CHECKLIST.md]
-Phase 4: Deployment                        [See DEPLOYMENT_CHECKLIST.md]
-Phase 5: Post-Deployment Verification      [See DEPLOYMENT_CHECKLIST.md]
-Phase 6: Monitoring Setup                  [See DEPLOYMENT_CHECKLIST.md]
-Phase 7: Documentation & Handoff           [See DEPLOYMENT_CHECKLIST.md]
-Phase 8: Ongoing Maintenance               [See DEPLOYMENT_CHECKLIST.md]
-
 📚 DOCUMENTATION INDEX
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Quick Overview:
-  → PRODUCTION_READY.md         (2 min read)
-  → DEPLOYMENT_INDEX.md          (5 min read)
+Quick Start:
+  → README.md                    (Main documentation)
+  → PRODUCTION_READY.md          (1 min overview)
 
 Setup Guides:
-  → PRODUCTION_SETUP.md          (15 min read)
-  → ENV_SETUP.md                 (10 min read)
+  → PRODUCTION_SETUP.md          (5 min setup)
+  → ENV_SETUP.md                 (Environment variables)
 
 Complete Reference:
-  → DEPLOYMENT.md                (30 min read)
-  → DEPLOYMENT_CHECKLIST.md      (Use during deployment)
+  → DEPLOYMENT.md                (Complete guide)
 
 🎯 QUICK START (15 MINUTES)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -165,10 +147,10 @@ Generated: January 18, 2026
 Last Verified: Production build successful
 Next Action: Read PRODUCTION_READY.md
 
-📖 Start here: PRODUCTION_READY.md
+📖 Start here: README.md or PRODUCTION_READY.md
 🚀 Quick setup: PRODUCTION_SETUP.md
 📋 Full guide: DEPLOYMENT.md
-✅ Checklist: DEPLOYMENT_CHECKLIST.md
-🔍 Index: DEPLOYMENT_INDEX.md
+🔧 Environment: ENV_SETUP.md
 
 ═══════════════════════════════════════════════════════════════════════════════
+

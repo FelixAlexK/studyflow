@@ -9,7 +9,10 @@
     "dev:ts": "tsc -b -w",
     "dev:convex": "pnpm dlx convex dev",
     "build": "vite build && tsc --noEmit",
-    "start": "node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "biome check --write ."
   },
   "dependencies": {
     "@clerk/tanstack-react-start": "^0.27.15",
