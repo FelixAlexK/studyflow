@@ -33,6 +33,11 @@ const config = defineConfig({
 	server: {
 		port: 3000,
 	},
+	define: {
+		// Ensure VITE_ env vars are available in SSR context
+		'import.meta.env.VITE_CONVEX_URL': JSON.stringify(process.env.VITE_CONVEX_URL),
+		'import.meta.env.VITE_SITE_URL': JSON.stringify(process.env.VITE_SITE_URL),
+	},
 });
 
 export default config;
