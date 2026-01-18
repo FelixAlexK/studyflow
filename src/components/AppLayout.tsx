@@ -3,7 +3,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type User } from "@workos/authkit-tanstack-react-start";
 import { useAuth } from "@workos/authkit-tanstack-react-start/client";
-import { Book, Calendar, CheckSquare, Home, Settings } from "lucide-react";
+import { Book, Calendar, CheckSquare, Home, Settings, Timer } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -82,6 +82,11 @@ export default function AppLayout({
 			title: "Calendar",
 			icon: Calendar,
 			href: "/calendar",
+		},
+		{
+			title: "Focus Timer",
+			icon: Timer,
+			href: "/pomodoro",
 		},
 	];
 
