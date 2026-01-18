@@ -18,7 +18,13 @@ export default defineSchema({
     endDate: v.optional(v.string()), // ISO 8601 date string
     color: v.optional(v.string()),
     allDay: v.optional(v.boolean()),
-  }).index('by_user', ['userId']),
+    // Recurring event fields
+    isRecurring: v.optional(v.boolean()), // default false
+    recurrenceFrequency: v.optional(v.union(v.literal('weekly'))), // future: daily, monthly
+    recurrenceEndDate: v.optional(v.string()), // ISO 8601 date string - null means infinite
+    parentEventId: v.optional(v.id('events')), // Reference to parent recurring event
+  }).index('by_user', ['userId'])
+    .index('by_parent', ['parentEventId']),
   tasks: defineTable({
     userId: v.string(),
     title: v.string(),
