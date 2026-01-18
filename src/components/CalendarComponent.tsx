@@ -96,8 +96,8 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
     startDate: "",
     endDate: "",
     allDay: false,
-    isRecurring: false,
-    recurrenceFrequency: "",
+    isRecurring: true,
+    recurrenceFrequency: "weekly",
     recurrenceEndDate: "",
   });
 

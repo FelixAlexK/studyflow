@@ -17,10 +17,17 @@ interface ExamFormProps {
   onSuccess?: () => void;
 }
 
+const getNextFullHour = (): string => {
+  const now = new Date();
+  const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+  nextHour.setMinutes(0, 0, 0);
+  return nextHour.toISOString().slice(0, 16);
+};
+
 export default function ExamForm({ onSuccess }: ExamFormProps) {
   const [formValues, setFormValues] = useState<ExamFormData>({
     subject: "",
-    dateTime: "",
+    dateTime: getNextFullHour(),
     location: "",
     learningGoal: "",
   });
@@ -55,7 +62,7 @@ export default function ExamForm({ onSuccess }: ExamFormProps) {
       // Reset form
       setFormValues({
         subject: "",
-        dateTime: "",
+        dateTime: getNextFullHour(),
         location: "",
         learningGoal: "",
       });
