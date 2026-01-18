@@ -239,11 +239,11 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
     <div className="w-full h-full p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
+        initialView="timeGridWeek"
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay",
+          right: "timeGridWeek,dayGridMonth,timeGridDay",
         }}
         events={calendarEvents}
         editable={true}
@@ -256,7 +256,11 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
         eventDrop={handleEventDrop}
         height="auto"
         contentHeight="auto"
-        
+        firstDay={1}
+        now={new Date()}
+        scrollTime="09:00:00"
+        slotDuration="01:00:00"
+        slotLabelInterval="01:00:00"
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -473,6 +477,100 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
         .fc-shadcn .fc-daygrid-day-number {
           color: hsl(var(--muted-foreground));
           padding: 0.35rem;
+        }
+
+        /* Highlight current day in week view */
+        .fc-shadcn .fc-col-header-cell.fc-day-today {
+          background-color: hsl(var(--primary) / 0.15) !important;
+          border-color: hsl(var(--primary)) !important;
+        }
+
+        .fc-shadcn .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+          color: hsl(var(--primary));
+          font-weight: 700;
+        }
+
+        .fc-shadcn .fc-daygrid-day.fc-day-today {
+          background-color: hsl(var(--primary) / 0.12) !important;
+          border-color: hsl(var(--primary)) !important;
+        }
+
+        .fc-shadcn .fc-daygrid-day-number.fc-day-today {
+          color: hsl(var(--primary));
+          font-weight: 700;
+        }
+
+        /* Time grid styling for week view */
+        .fc-shadcn .fc-timegrid-slot {
+          height: 3rem;
+        }
+
+        .fc-shadcn .fc-col-header-cell {
+          padding: 0.75rem 0.25rem;
+          font-weight: 500;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+          .fc-shadcn .fc-toolbar {
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+          }
+
+          .fc-shadcn .fc-toolbar-title {
+            font-size: 1rem;
+            margin: 0.5rem 0;
+          }
+
+          .fc-shadcn .fc-button {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
+          }
+
+          .fc-shadcn .fc-timegrid-slot {
+            height: 2.5rem;
+          }
+
+          .fc-shadcn .fc-col-header-cell {
+            padding: 0.5rem 0.1rem;
+            font-size: 0.85rem;
+          }
+
+          .fc-shadcn .fc-daygrid-day-number,
+          .fc-shadcn .fc-col-header-cell-cushion {
+            padding: 0.25rem;
+          }
+
+          .fc-shadcn .fc-event {
+            padding: 0.1rem 0.25rem;
+            font-size: 0.75rem;
+          }
+
+          .fc-shadcn .fc-event-title {
+            font-size: 0.7rem;
+          }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+          .fc-shadcn .fc-timegrid-slot {
+            height: 2rem;
+          }
+
+          .fc-shadcn .fc-col-header-cell {
+            padding: 0.4rem 0;
+            font-size: 0.75rem;
+          }
+
+          .fc-shadcn .fc-toolbar {
+            gap: 0.5rem;
+          }
+
+          .fc-shadcn .fc-button {
+            padding: 0.25rem 0.4rem;
+            font-size: 0.75rem;
+          }
         }
 
         .fc-shadcn .fc-event {
