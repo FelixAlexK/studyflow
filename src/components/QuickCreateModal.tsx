@@ -4,6 +4,7 @@ import { useConvexMutation } from "@convex-dev/react-query";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "../../convex/_generated/api";
 
 type CreateType = "task" | "exam" | "event" | null;
+
+// Helper functions for smart defaults
+const getTodayDate = () => {
+  return new Date().toISOString().split('T')[0];
+};
+
+const getNextFullHour = () => {
+  const now = new Date();
+  const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+  nextHour.setMinutes(0, 0, 0);
+  return nextHour.toTimeString().slice(0, 5);
+};
+
+const getReminderLabel = (minutes: number): string => {
+  if (minutes === 1440) return '24 Stunden';
+  if (minutes === 60) return '1 Stunde';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}min`;
+};
 
 export default function QuickCreateModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +48,9 @@ export default function QuickCreateModal() {
   const [description, setDescription] = useState("");
   const [subject, setSubject] = useState("");
   const [location, setLocation] = useState("");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderMinutes, setReminderMinutes] = useState(1440); // 24 hours default
+  const [isRecurring, setIsRecurring] = useState(false);
 
   // Mutations
   const createTask = useConvexMutation(api.tasks.createTask);
@@ -42,6 +66,9 @@ export default function QuickCreateModal() {
     setLocation("");
     setShowDetails(false);
     setError(null);
+    setReminderEnabled(false);
+    setReminderMinutes(1440);
+    setIsRecurring(false);
   };
 
   const handleClose = () => {
@@ -53,6 +80,21 @@ export default function QuickCreateModal() {
   const handleSelectType = (type: CreateType) => {
     setCreateType(type);
     setError(null);
+    
+    // Set smart defaults based on type
+    setDate(getTodayDate());
+    
+    if (type === "exam") {
+      setTime(getNextFullHour());
+      setReminderEnabled(true); // Auto-enable reminder for exams
+      setReminderMinutes(1440); // 24 hours before
+    } else if (type === "event") {
+      setTime("");
+      setIsRecurring(false); // Can be changed by user
+    } else if (type === "task") {
+      setTime("");
+      setReminderEnabled(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -90,7 +132,7 @@ export default function QuickCreateModal() {
 
         const dateTime = time
           ? new Date(`${date}T${time}`).toISOString()
-          : new Date(`${date}T10:00:00`).toISOString();
+          : new Date(`${date}T${getNextFullHour()}`).toISOString();
 
         await createExam({
           subject: subject.trim(),
@@ -115,6 +157,8 @@ export default function QuickCreateModal() {
           startDate,
           type: "sonstiges",
           allDay: true,
+          isRecurring: isRecurring,
+          recurrenceFrequency: isRecurring ? "weekly" : undefined,
         });
       }
 
@@ -246,6 +290,23 @@ export default function QuickCreateModal() {
                         disabled={isLoading}
                       />
                     </div>
+                    {/* Auto-enable reminder for exams */}
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3 flex items-start gap-3">
+                      <Checkbox
+                        id="exam-reminder"
+                        checked={reminderEnabled}
+                        onCheckedChange={(checked) => setReminderEnabled(checked === true)}
+                        disabled={isLoading}
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="exam-reminder" className="font-medium text-sm cursor-pointer">
+                          Erinnerung aktiviert
+                        </Label>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {getReminderLabel(reminderMinutes)} vor der Prüfung
+                        </p>
+                      </div>
+                    </div>
                   </>
                 )}
 
@@ -270,6 +331,23 @@ export default function QuickCreateModal() {
                         onChange={(e) => setDate(e.target.value)}
                         disabled={isLoading}
                       />
+                    </div>
+                    {/* Auto-suggest recurring for events (typical for lectures) */}
+                    <div className="bg-amber-50 border border-amber-200 rounded p-3 flex items-start gap-3">
+                      <Checkbox
+                        id="event-recurring"
+                        checked={isRecurring}
+                        onCheckedChange={(checked) => setIsRecurring(checked === true)}
+                        disabled={isLoading}
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="event-recurring" className="font-medium text-sm cursor-pointer">
+                          Wöchentlich wiederkehrend
+                        </Label>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Perfekt für regelmäßige Vorlesungen oder Übungen
+                        </p>
+                      </div>
                     </div>
                   </>
                 )}
@@ -310,6 +388,9 @@ export default function QuickCreateModal() {
                             onChange={(e) => setTime(e.target.value)}
                             disabled={isLoading}
                           />
+                          <p className="text-xs text-gray-500">
+                            Standardwert: {getNextFullHour()} Uhr
+                          </p>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="exam-location">Ort</Label>
@@ -332,6 +413,23 @@ export default function QuickCreateModal() {
                             className="resize-none h-20"
                           />
                         </div>
+                        {reminderEnabled && (
+                          <div className="space-y-2">
+                            <Label htmlFor="reminder-minutes">Erinnerung vorher (Minuten)</Label>
+                            <Input
+                              id="reminder-minutes"
+                              type="number"
+                              min="15"
+                              step="15"
+                              value={reminderMinutes}
+                              onChange={(e) => setReminderMinutes(parseInt(e.target.value) || 1440)}
+                              disabled={isLoading}
+                            />
+                            <p className="text-xs text-gray-500">
+                              {getReminderLabel(reminderMinutes)} vor der Prüfung
+                            </p>
+                          </div>
+                        )}
                       </>
                     )}
 
