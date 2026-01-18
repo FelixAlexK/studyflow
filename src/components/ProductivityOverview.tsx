@@ -1,7 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, CheckCircle2, Loader2 } from "lucide-react";
+import { BookOpen, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../../convex/_generated/api";
 
 export default function ProductivityOverview() {
@@ -17,8 +18,6 @@ export default function ProductivityOverview() {
     convexQuery(api.stats.getTotalFocusMinutes, {}),
   );
 
-  const isLoading = tasksLoading || sessionsLoading || minutesLoading;
-
   const focusHours = Math.floor(totalFocusMinutes / 60);
   const focusRemainingMinutes = totalFocusMinutes % 60;
 
@@ -31,11 +30,8 @@ export default function ProductivityOverview() {
           <CardDescription>This week</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Loading...</span>
-            </div>
+          {tasksLoading ? (
+            <Skeleton className="h-8 w-12" />
           ) : (
             <div className="flex items-end gap-2">
               <div className="text-3xl font-bold">{completedTasks}</div>
@@ -52,11 +48,8 @@ export default function ProductivityOverview() {
           <CardDescription>Total completed</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Loading...</span>
-            </div>
+          {sessionsLoading ? (
+            <Skeleton className="h-8 w-12" />
           ) : (
             <div className="flex items-end gap-2">
               <div className="text-3xl font-bold">{focusSessions}</div>
@@ -73,11 +66,8 @@ export default function ProductivityOverview() {
           <CardDescription>Hours and minutes</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Loading...</span>
-            </div>
+          {minutesLoading ? (
+            <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-end gap-2">
               <div className="text-3xl font-bold">
