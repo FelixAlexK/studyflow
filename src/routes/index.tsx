@@ -4,6 +4,7 @@ import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import { useAuth } from "@workos-inc/authkit-react";
 import AppLayout from "@/components/AppLayout";
+import ProductivityOverview from "@/components/ProductivityOverview";
 import {
 	Card,
 	CardContent,
@@ -35,8 +36,13 @@ function DashboardPage() {
 						Welcome, {user?.firstName || "User"}
 					</h2>
 					<p className="text-muted-foreground">
-						Manage your tasks and study sessions here.
+						Track your productivity and manage your tasks here.
 					</p>
+				</div>
+
+				<div>
+					<h3 className="mb-4 text-lg font-semibold">Your Progress</h3>
+					<ProductivityOverview />
 				</div>
 
 				<Card>

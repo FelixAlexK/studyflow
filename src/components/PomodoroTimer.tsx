@@ -1,10 +1,12 @@
 'use client';
 
+import { useConvexMutation } from '@convex-dev/react-query';
 import { Loader2, Pause, Play, RotateCcw } from 'lucide-react';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { api } from '../../convex/_generated/api';
 
 type TimerMode = 'focus' | 'break';
 
@@ -22,6 +24,8 @@ const DEFAULT_BREAK = 5;
 const STORAGE_KEY = 'pomodoro-timer-state';
 
 export default function PomodoroTimer() {
+  const logFocusSession = useConvexMutation(api.stats.logFocusSession);
+
   const [timer, setTimer] = useState<TimerState>(() => {
     const focusDuration = DEFAULT_FOCUS;
     return {
@@ -90,6 +94,13 @@ export default function PomodoroTimer() {
   useEffect(() => {
     if (!timer.isRunning || timer.remainingSeconds <= 0) {
       if (timer.remainingSeconds <= 0 && timer.isRunning) {
+        // Focus session just completed, log it to backend
+        if (timer.mode === 'focus') {
+          void logFocusSession({ duration: timer.focusDuration }).catch((err) => {
+            console.error('Failed to log focus session:', err);
+          });
+        }
+
         // Timer finished, switch modes
         const newMode = timer.mode === 'focus' ? 'break' : 'focus';
         const newDuration = newMode === 'focus' ? timer.focusDuration : timer.breakDuration;
@@ -125,7 +136,7 @@ export default function PomodoroTimer() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timer.isRunning, timer.remainingSeconds, timer.mode, timer.focusDuration, timer.breakDuration]);
+  }, [timer.isRunning, timer.remainingSeconds, timer.mode, timer.focusDuration, timer.breakDuration, logFocusSession]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);

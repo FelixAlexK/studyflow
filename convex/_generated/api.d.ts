@@ -10,6 +10,7 @@
 
 import type * as events from "../events.js";
 import type * as myFunctions from "../myFunctions.js";
+import type * as stats from "../stats.js";
 import type * as tasks from "../tasks.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   events: typeof events;
   myFunctions: typeof myFunctions;
+  stats: typeof stats;
   tasks: typeof tasks;
 }>;
 
