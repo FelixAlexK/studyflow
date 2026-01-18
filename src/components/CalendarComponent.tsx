@@ -39,6 +39,9 @@ interface EventFormData {
   startDate: string;
   endDate: string;
   allDay: boolean;
+  isRecurring: boolean;
+  recurrenceFrequency: "weekly" | "";
+  recurrenceEndDate: string;
 }
 
 interface CalendarEvent {
@@ -51,6 +54,10 @@ interface CalendarEvent {
   endDate?: string;
   color?: string;
   allDay?: boolean;
+  isRecurring?: boolean;
+  recurrenceFrequency?: "weekly";
+  recurrenceEndDate?: string;
+  parentEventId?: Id<"events">;
 }
 // Helper function to format date for datetime-local input
 const formatDateTimeLocal = (dateStr: string): string => {
@@ -89,6 +96,9 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
     startDate: "",
     endDate: "",
     allDay: false,
+    isRecurring: false,
+    recurrenceFrequency: "",
+    recurrenceEndDate: "",
   });
 
   // Query to fetch events
@@ -125,6 +135,9 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
       startDate: formatDateTimeLocal(selectInfo.startStr),
       endDate: formatDateTimeLocal(selectInfo.endStr),
       allDay: selectInfo.allDay,
+      isRecurring: false,
+      recurrenceFrequency: "",
+      recurrenceEndDate: "",
     });
     setIsDialogOpen(true);
   };
@@ -139,6 +152,11 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
       startDate: formatDateTimeLocal(event.startStr),
       endDate: formatDateTimeLocal(event.endStr || event.startStr),
       allDay: event.allDay,
+      isRecurring: event.extendedProps.isRecurring || false,
+      recurrenceFrequency: event.extendedProps.recurrenceFrequency || "",
+      recurrenceEndDate: event.extendedProps.recurrenceEndDate
+        ? formatDateTimeLocal(event.extendedProps.recurrenceEndDate)
+        : "",
     });
     setIsDialogOpen(true);
   };
@@ -166,6 +184,9 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         allDay: formData.allDay,
+        isRecurring: formData.isRecurring,
+        recurrenceFrequency: formData.recurrenceFrequency || undefined,
+        recurrenceEndDate: formData.recurrenceEndDate || undefined,
       });
     } else {
       // Create new event
@@ -177,6 +198,9 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         allDay: formData.allDay,
+        isRecurring: formData.isRecurring,
+        recurrenceFrequency: formData.recurrenceFrequency || undefined,
+        recurrenceEndDate: formData.recurrenceEndDate || undefined,
       });
     }
     
@@ -204,6 +228,9 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
       startDate: "",
       endDate: "",
       allDay: false,
+      isRecurring: false,
+      recurrenceFrequency: "",
+      recurrenceEndDate: "",
     });
     setSelectedEvent(null);
   };
@@ -308,6 +335,56 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
                   }
                 />
               </div>
+              <div className="grid gap-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="isRecurring"
+                    type="checkbox"
+                    checked={formData.isRecurring}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isRecurring: e.target.checked })
+                    }
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="isRecurring" className="font-semibold">
+                    Recurring Event
+                  </Label>
+                </div>
+              </div>
+              {formData.isRecurring && (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="recurrenceFrequency">Frequency</Label>
+                    <Select
+                      value={formData.recurrenceFrequency}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, recurrenceFrequency: value as "weekly" | "" })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="recurrenceEndDate">Recurrence End Date (Optional)</Label>
+                    <Input
+                      id="recurrenceEndDate"
+                      type="datetime-local"
+                      value={formData.recurrenceEndDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, recurrenceEndDate: e.target.value })
+                      }
+                    />
+                    <p className="text-xs text-gray-500">
+                      Leave empty for infinite recurrence
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
             <DialogFooter className="gap-2">
               {selectedEvent && (
