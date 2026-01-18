@@ -1,6 +1,19 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+// Helper function to get color based on event type
+const getEventColor = (
+  type: "vorlesung" | "übung" | "praktikum" | "sonstiges",
+): string => {
+  const colors: Record<string, string> = {
+    vorlesung: "#3b82f6",  // Blue
+    übung: "#10b981",      // Green
+    praktikum: "#f59e0b",  // Amber
+    sonstiges: "#8b5cf6",  // Purple
+  };
+  return colors[type] || "#6b7280"; // Default gray
+};
+
 // Helper function to add weeks to a date
 const addWeeks = (dateStr: string, weeks: number): string => {
   const date = new Date(dateStr);
@@ -58,7 +71,7 @@ export const createEvent = mutation({
     userId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    type: v.union(v.literal("class"), v.literal("deadline")),
+    type: v.union(v.literal("vorlesung"), v.literal("übung"), v.literal("praktikum"), v.literal("sonstiges")),
     startDate: v.string(),
     endDate: v.optional(v.string()),
     allDay: v.optional(v.boolean()),
@@ -68,7 +81,7 @@ export const createEvent = mutation({
   },
   handler: async (ctx, args) => {
     // Set color based on event type
-    const color = args.type === "class" ? "#3b82f6" : "#ef4444";
+    const color = getEventColor(args.type as "vorlesung" | "übung" | "praktikum" | "sonstiges");
     
     // Create the parent event
     const parentEventId = await ctx.db.insert("events", {
@@ -131,7 +144,7 @@ export const updateEvent = mutation({
     eventId: v.id("events"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("class"), v.literal("deadline"))),
+    type: v.optional(v.union(v.literal("vorlesung"), v.literal("übung"), v.literal("praktikum"), v.literal("sonstiges"))),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     allDay: v.optional(v.boolean()),
@@ -151,7 +164,7 @@ export const updateEvent = mutation({
     // Update color if type changed
     const updateData: any = { ...updates };
     if (updates.type) {
-      updateData.color = updates.type === "class" ? "#3b82f6" : "#ef4444";
+      updateData.color = getEventColor(updates.type as "vorlesung" | "übung" | "praktikum" | "sonstiges");
     }
     
     // If recurring properties changed, regenerate instances (delete old, create new)
@@ -241,5 +254,34 @@ export const deleteEvent = mutation({
     
     await ctx.db.delete(args.eventId);
     return args.eventId;
+  },
+});
+// Migration mutation to convert old event types to new ones
+export const migrateOldEventTypes = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all events
+    const allEvents = await ctx.db.query("events").collect();
+    
+    let migratedCount = 0;
+    
+    for (const event of allEvents) {
+      // Check if event has old type values
+      const eventType = (event as any).type;
+      
+      if (eventType === "class" || eventType === "deadline") {
+        // Convert old types to new types
+        const newType = eventType === "class" ? "vorlesung" : "sonstiges";
+        
+        await ctx.db.patch(event._id, {
+          type: newType,
+          color: getEventColor(newType as "vorlesung" | "übung" | "praktikum" | "sonstiges"),
+        });
+        
+        migratedCount++;
+      }
+    }
+    
+    return { migratedCount, message: `Migrated ${migratedCount} events to new type system` };
   },
 });

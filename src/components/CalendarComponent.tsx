@@ -35,7 +35,7 @@ interface CalendarComponentProps {
 interface EventFormData {
   title: string;
   description: string;
-  type: "class" | "deadline";
+  type: "vorlesung" | "übung" | "praktikum" | "sonstiges";
   startDate: string;
   endDate: string;
   allDay: boolean;
@@ -49,7 +49,7 @@ interface CalendarEvent {
   userId: string;
   title: string;
   description?: string;
-  type: "class" | "deadline";
+  type: "vorlesung" | "übung" | "praktikum" | "sonstiges";
   startDate: string;
   endDate?: string;
   color?: string;
@@ -92,7 +92,7 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
-    type: "class",
+    type: "vorlesung",
     startDate: "",
     endDate: "",
     allDay: false,
@@ -131,7 +131,7 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
     setFormData({
       title: "",
       description: "",
-      type: "class",
+      type: "vorlesung",
       startDate: formatDateTimeLocal(selectInfo.startStr),
       endDate: formatDateTimeLocal(selectInfo.endStr),
       allDay: selectInfo.allDay,
@@ -224,7 +224,7 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
     setFormData({
       title: "",
       description: "",
-      type: "class",
+      type: "vorlesung",
       startDate: "",
       endDate: "",
       allDay: false,
@@ -292,7 +292,7 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
                 <Label htmlFor="type">Type</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value: "class" | "deadline") =>
+                  onValueChange={(value: "vorlesung" | "übung" | "praktikum" | "sonstiges") =>
                     setFormData({ ...formData, type: value })
                   }
                 >
@@ -300,8 +300,26 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="class">Class (Blue)</SelectItem>
-                    <SelectItem value="deadline">Deadline (Red)</SelectItem>
+                    <SelectItem value="vorlesung">
+                      <span className="flex items-center gap-2">
+                        📚 Vorlesung (Blue)
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="übung">
+                      <span className="flex items-center gap-2">
+                        ✏️ Übung (Green)
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="praktikum">
+                      <span className="flex items-center gap-2">
+                        🛠️ Praktikum (Amber)
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="sonstiges">
+                      <span className="flex items-center gap-2">
+                        📝 Sonstiges (Purple)
+                      </span>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -508,6 +526,38 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
         .fc-shadcn .fc-col-header-cell {
           padding: 0.75rem 0.25rem;
           font-weight: 500;
+        }
+
+        /* Event type colors */
+        .fc-event[data-event-type="vorlesung"] {
+          background-color: #3b82f6 !important;
+          border-color: #1d4ed8 !important;
+        }
+
+        .fc-event[data-event-type="übung"] {
+          background-color: #10b981 !important;
+          border-color: #059669 !important;
+        }
+
+        .fc-event[data-event-type="praktikum"] {
+          background-color: #f59e0b !important;
+          border-color: #d97706 !important;
+        }
+
+        .fc-event[data-event-type="sonstiges"] {
+          background-color: #8b5cf6 !important;
+          border-color: #7c3aed !important;
+        }
+
+        /* Event styling */
+        .fc-event {
+          border-radius: 0.375rem;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .fc-event-title {
+          font-weight: 600;
+          font-size: 0.875rem;
         }
 
         /* Mobile responsive */
