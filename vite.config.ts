@@ -1,27 +1,38 @@
-import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
-import vue from "@vitejs/plugin-vue";
+import { devtools } from "@tanstack/devtools-vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import * as dotenv from "dotenv";
+import { nitro } from "nitro/vite";
+import { fileURLToPath, URL } from "url";
 import { defineConfig } from "vite";
+import viteTsConfigPaths from "vite-tsconfig-paths";
 
-// https://vite.dev/config/
-export default defineConfig({
-	plugins: [vue(), tailwindcss()],
+// Load .env.local (TanStack Start/Vite convention)
+dotenv.config({ path: ".env.local", quiet: true });
+// Also load .env as fallback
+dotenv.config({ quiet: true });
 
+const config = defineConfig({
 	resolve: {
 		alias: {
-			"@": path.resolve(__dirname, "./src"),
+			"@": fileURLToPath(new URL("./src", import.meta.url)),
 		},
 	},
-
+	plugins: [
+		devtools(),
+		nitro(),
+		// this is the plugin that enables path aliases
+		viteTsConfigPaths({
+			projects: ["./tsconfig.json"],
+		}),
+		tailwindcss(),
+		tanstackStart(),
+		viteReact(),
+	],
 	server: {
-		proxy: {
-			"/api/auth": {
-				target:
-					process.env.VITE_PUBLIC_CONVEX_SITE_URL ||
-					"https://outgoing-ox-416.convex.site",
-				changeOrigin: true,
-				secure: false,
-			},
-		},
+		port: 3000,
 	},
 });
+
+export default config;
