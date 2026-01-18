@@ -7,6 +7,7 @@ import LearningCheckIns from "@/components/LearningCheckIns";
 import ProductivityOverview from "@/components/ProductivityOverview";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
+import TodayImportant from "@/components/TodayImportant";
 import {
 	Card,
 	CardContent,
@@ -42,6 +43,7 @@ function DashboardPage() {
 					</p>
 				</div>
 
+				{user?.id ? <TodayImportant userId={user.id} /> : null}
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
 				{user?.id ? <StressOverview /> : null}
 				{user?.id ? <LearningCheckIns /> : null}
