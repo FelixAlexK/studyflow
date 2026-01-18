@@ -15,6 +15,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import WeekOverview from "@/components/WeekOverview";
 import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/")({
@@ -46,6 +47,7 @@ function DashboardPage() {
 				{user?.id ? <TodayImportant userId={user.id} /> : null}
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
 				{user?.id ? <StressOverview /> : null}
+				{user?.id ? <WeekOverview userId={user.id} /> : null}
 				{user?.id ? <LearningCheckIns /> : null}
 
 				<div>
