@@ -29,6 +29,9 @@ export default defineSchema({
       v.literal('in_progress'),
       v.literal('done'),
     ),
+    reminderEnabled: v.optional(v.boolean()), // default false
+    reminderMinutesBefore: v.optional(v.number()), // e.g. 1440 for 1 day before
+    reminderLastNotifiedAt: v.optional(v.string()), // ISO 8601 timestamp of last notification
   }).index('by_user', ['userId']),
   focusSessions: defineTable({
     userId: v.string(),
