@@ -13,7 +13,7 @@ export default defineSchema({
     userId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    type: v.union(v.literal('class'), v.literal('deadline')),
+    type: v.union(v.literal('vorlesung'), v.literal('übung'), v.literal('praktikum'), v.literal('sonstiges')),
     startDate: v.string(), // ISO 8601 date string
     endDate: v.optional(v.string()), // ISO 8601 date string
     color: v.optional(v.string()),
