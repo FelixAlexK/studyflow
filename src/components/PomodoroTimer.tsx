@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Pause, Play, RotateCcw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,19 +23,6 @@ const STORAGE_KEY = 'pomodoro-timer-state';
 
 export default function PomodoroTimer() {
   const [timer, setTimer] = useState<TimerState>(() => {
-    // Try to restore from localStorage
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as TimerState;
-          return parsed;
-        } catch {
-          // Fall through to defaults
-        }
-      }
-    }
-
     const focusDuration = DEFAULT_FOCUS;
     return {
       mode: 'focus',
@@ -47,15 +34,56 @@ export default function PomodoroTimer() {
     };
   });
 
-  const [focusInput, setFocusInput] = useState(String(timer.focusDuration));
-  const [breakInput, setBreakInput] = useState(String(timer.breakDuration));
+  const [focusInput, setFocusInput] = useState<string>(() => {
+    // Try to load from localStorage synchronously
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as TimerState;
+          return String(parsed.focusDuration);
+        } catch {
+          // Fall through
+        }
+      }
+    }
+    return String(DEFAULT_FOCUS);
+  });
+
+  const [breakInput, setBreakInput] = useState<string>(() => {
+    // Try to load from localStorage synchronously
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as TimerState;
+          return String(parsed.breakDuration);
+        } catch {
+          // Fall through
+        }
+      }
+    }
+    return String(DEFAULT_BREAK);
+  });
+
   const [editMode, setEditMode] = useState(false);
+
+  // Restore full timer state from localStorage on mount (before paint to avoid flash)
+  useLayoutEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as TimerState;
+        setTimer(parsed);
+      } catch {
+        // Ignore corrupted data
+      }
+    }
+  }, []);
 
   // Persist to localStorage whenever timer changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
   }, [timer]);
 
   // Timer tick effect
@@ -158,7 +186,8 @@ export default function PomodoroTimer() {
         {/* Circular Timer Display */}
         <div className="flex flex-col items-center justify-center space-y-4">
           <div className="relative h-48 w-48">
-            <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
+            <svg  className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100" aria-label="Timer progress">
+              <title>Timer progress</title>
               <circle
                 cx="50"
                 cy="50"
@@ -238,8 +267,9 @@ export default function PomodoroTimer() {
         {editMode && (
           <div className="space-y-3 rounded-md border bg-muted/30 p-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Focus Duration (minutes)</label>
+              <label htmlFor="focus-duration" className="text-sm font-medium">Focus Duration (minutes)</label>
               <Input
+                id="focus-duration"
                 type="number"
                 min="1"
                 max="60"
@@ -248,8 +278,9 @@ export default function PomodoroTimer() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Break Duration (minutes)</label>
+              <label htmlFor="break-duration" className="text-sm font-medium">Break Duration (minutes)</label>
               <Input
+                id="break-duration"
                 type="number"
                 min="1"
                 max="30"
