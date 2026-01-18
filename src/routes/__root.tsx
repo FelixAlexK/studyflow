@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NotificationCenter from "@/components/NotificationCenter";
 import { NotificationProvider } from "@/components/NotificationProvider";
+import QuickCreateModal from "@/components/QuickCreateModal";
 import ReminderChecker from "@/components/ReminderChecker";
 import appCssUrl from "../styles.css?url";
 
@@ -82,6 +83,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 				<ErrorBoundary>
 					<NotificationProvider>
 						<ReminderChecker />
+						<QuickCreateModal />
 						{children}
 						<NotificationCenter />
 					</NotificationProvider>
