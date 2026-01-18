@@ -32,6 +32,7 @@ export default defineSchema({
     dateTime: v.string(),
     // Optional location/room
     location: v.optional(v.string()),
+    learningGoal: v.optional(v.string()),
   }).index('by_user', ['userId']),
   tasks: defineTable({
     userId: v.string(),
