@@ -66,4 +66,9 @@ export default defineSchema({
     date: v.string(), // ISO 8601 date string (YYYY-MM-DD) - one per day max
   }).index('by_user', ['userId'])
     .index('by_user_date', ['userId', 'date']),
+  learningProgress: defineTable({
+    userId: v.string(),
+    totalSessions: v.number(), // cumulative learning sessions
+    lastUpdated: v.string(), // ISO 8601 timestamp
+  }).index('by_user', ['userId']),
 });

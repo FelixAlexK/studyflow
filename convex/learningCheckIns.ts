@@ -63,10 +63,61 @@ export const createCheckIn = mutation({
       throw new Error("Already checked in today");
     }
 
-    return ctx.db.insert("learningCheckIns", {
+    // Create check-in
+    await ctx.db.insert("learningCheckIns", {
       userId: identity.subject,
       date: today,
     });
+
+    // Update progress - increment total sessions
+    const progress = await ctx.db
+      .query("learningProgress")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (progress) {
+      await ctx.db.patch(progress._id, {
+        totalSessions: progress.totalSessions + 1,
+        lastUpdated: new Date().toISOString(),
+      });
+    } else {
+      // Create initial progress record
+      await ctx.db.insert("learningProgress", {
+        userId: identity.subject,
+        totalSessions: 1,
+        lastUpdated: new Date().toISOString(),
+      });
+    }
+
+    return today;
+  },
+});
+
+// Get learning progress
+export const getProgress = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const progress = await ctx.db
+      .query("learningProgress")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    // Goal: 10 sessions per week = 100%
+    const weeklyGoal = 10;
+    const totalSessions = progress?.totalSessions ?? 0;
+    
+    // Calculate progress percentage based on cumulative sessions
+    // Each session is worth 10%, capped at 100%
+    const percentage = Math.min((totalSessions / weeklyGoal) * 100, 100);
+
+    return {
+      totalSessions,
+      percentage: Math.round(percentage),
+      weeklyGoal,
+    };
   },
 });
 
