@@ -65,10 +65,10 @@ type Item =
     };
 
 interface WeekOverviewProps {
-  userId: string;
+  userId?: string;
 }
 
-export default function WeekOverview({ userId }: WeekOverviewProps) {
+export default function WeekOverview({ userId: _userId }: WeekOverviewProps) {
   const { data: exams = [] } = useSuspenseQuery(convexQuery(api.exams.listExams, {}));
   const { data: submissions = [] } = useSuspenseQuery(
     convexQuery(api.submissions.listSubmissions, {}),

@@ -191,7 +191,6 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
     } else {
       // Create new event
       await createEvent({
-        userId,
         title: formData.title,
         description: formData.description,
         type: formData.type,

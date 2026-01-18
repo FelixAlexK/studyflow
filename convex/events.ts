@@ -68,7 +68,6 @@ export const listEvents = query({
 // Mutation to create a new event (with optional recurrence)
 export const createEvent = mutation({
   args: {
-    userId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
     type: v.union(v.literal("vorlesung"), v.literal("übung"), v.literal("praktikum"), v.literal("sonstiges")),
@@ -80,12 +79,15 @@ export const createEvent = mutation({
     recurrenceEndDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
     // Set color based on event type
     const color = getEventColor(args.type as "vorlesung" | "übung" | "praktikum" | "sonstiges");
     
     // Create the parent event
     const parentEventId = await ctx.db.insert("events", {
-      userId: args.userId,
+      userId: identity.subject,
       title: args.title,
       description: args.description,
       type: args.type,
@@ -121,7 +123,7 @@ export const createEvent = mutation({
         }
         
         await ctx.db.insert("events", {
-          userId: args.userId,
+          userId: identity.subject,
           title: args.title,
           description: args.description,
           type: args.type,
