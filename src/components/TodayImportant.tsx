@@ -65,11 +65,11 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
         <CardTitle>Was ist heute wichtig?</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Prüfungen heute */}
+        {/* Prüfungen heute - HÖCHSTE PRIORITÄT */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-purple-100 px-2 py-1 text-xs font-semibold text-purple-900">Prüfungen</span>
-            <span className="text-sm text-muted-foreground">Nur für heute</span>
+            <span className="rounded-full bg-purple-600 px-3 py-1.5 text-sm font-bold text-white shadow-sm">🎓 Prüfungen</span>
+            <span className="text-xs text-muted-foreground font-medium">Heute</span>
           </div>
           {todayExams.length === 0 ? (
             <div className="rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-3 text-sm">
@@ -83,7 +83,7 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
                 const isExpanded = expandedExams.has(exam._id);
                 const hasDetails = !!exam.location;
                 return (
-                  <li key={String(exam._id)} className="rounded-md border bg-white/60">
+                  <li key={String(exam._id)} className="rounded-lg border-2 border-purple-200 bg-purple-50/80 shadow-sm">
                     <button
                       type="button"
                       onClick={() => {
@@ -96,15 +96,15 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
                         }
                         setExpandedExams(newSet);
                       }}
-                      className={`w-full px-3 py-2 text-left ${
-                        hasDetails ? "hover:bg-muted/20 transition-colors" : ""
+                      className={`w-full px-4 py-3 text-left ${
+                        hasDetails ? "hover:bg-purple-100/50 transition-colors" : ""
                       }`}
                       disabled={!hasDetails}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold leading-tight text-sm">{exam.subject}</span>
+                        <span className="font-bold leading-tight text-base text-purple-900">{exam.subject}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{formatTime(exam.dateTime)}</span>
+                          <span className="text-sm font-semibold text-purple-700">{formatTime(exam.dateTime)}</span>
                           {hasDetails && (
                             <ChevronDown
                               className={`h-4 w-4 text-muted-foreground transition-transform ${
@@ -127,11 +127,11 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
           )}
         </div>
 
-        {/* Aufgaben heute */}
+        {/* Aufgaben heute - HOHE PRIORITÄT */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">Aufgaben</span>
-            <span className="text-sm text-muted-foreground">Nur für heute</span>
+            <span className="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white shadow-sm">⚡ Aufgaben</span>
+            <span className="text-xs text-muted-foreground font-medium">Heute fällig</span>
           </div>
           {todayTasks.length === 0 ? (
             <div className="rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-3 text-sm">
@@ -145,7 +145,7 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
                 const isExpanded = expandedTasks.has(task._id);
                 const hasDetails = !!task.description;
                 return (
-                  <li key={String(task._id)} className="rounded-md border bg-white/60">
+                  <li key={String(task._id)} className="rounded-lg border-2 border-amber-200 bg-amber-50/60 shadow-sm">
                     <button
                       type="button"
                       onClick={() => {
@@ -158,15 +158,15 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
                         }
                         setExpandedTasks(newSet);
                       }}
-                      className={`w-full px-3 py-2 text-left ${
-                        hasDetails ? "hover:bg-muted/20 transition-colors" : ""
+                      className={`w-full px-4 py-2.5 text-left ${
+                        hasDetails ? "hover:bg-amber-100/50 transition-colors" : ""
                       }`}
                       disabled={!hasDetails}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold leading-tight text-sm">{task.title}</span>
+                        <span className="font-bold leading-tight text-sm text-amber-900">{task.title}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Heute</span>
+                          <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Heute</span>
                           {hasDetails && (
                             <ChevronDown
                               className={`h-4 w-4 text-muted-foreground transition-transform ${
@@ -189,11 +189,11 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
           )}
         </div>
 
-        {/* Termine heute */}
+        {/* Termine heute - NIEDRIGERE PRIORITÄT */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-900">Termine</span>
-            <span className="text-sm text-muted-foreground">Nur für heute</span>
+            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">📅 Termine</span>
+            <span className="text-xs text-muted-foreground">Heute</span>
           </div>
           {todayEvents.length === 0 ? (
             <div className="rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-3 text-sm">
@@ -207,7 +207,7 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
                 const isExpanded = expandedEvents.has(event._id);
                 const hasDetails = !!event.description;
                 return (
-                  <li key={String(event._id)} className="rounded-md border bg-white/60">
+                  <li key={String(event._id)} className="rounded-md border border-blue-100 bg-blue-50/40">
                     <button
                       type="button"
                       onClick={() => {
@@ -221,14 +221,14 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
                         setExpandedEvents(newSet);
                       }}
                       className={`w-full px-3 py-2 text-left ${
-                        hasDetails ? "hover:bg-muted/20 transition-colors" : ""
+                        hasDetails ? "hover:bg-blue-50 transition-colors" : ""
                       }`}
                       disabled={!hasDetails}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold leading-tight text-sm">{event.title}</span>
+                        <span className="font-medium leading-tight text-sm text-blue-900">{event.title}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{event.allDay ? "Ganztägig" : formatTime(event.startDate)}</span>
+                          <span className="text-xs text-blue-700">{event.allDay ? "Ganztägig" : formatTime(event.startDate)}</span>
                           {hasDetails && (
                             <ChevronDown
                               className={`h-4 w-4 text-muted-foreground transition-transform ${

@@ -28,13 +28,15 @@ const getCountdownInfo = (dueDate: string) => {
   const abs = Math.abs(daysLeft);
   const label = daysLeft >= 0
     ? `Noch ${daysLeft} Tag${daysLeft === 1 ? "" : "e"}`
-    : `Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
+    : `⚠️ Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
 
-  let colorClass = "bg-red-100 text-red-800";
+  let colorClass = "bg-red-600 text-white font-bold shadow-sm";
   if (daysLeft > 7) {
-    colorClass = "bg-green-100 text-green-800";
+    colorClass = "bg-green-100 text-green-800 font-medium";
   } else if (daysLeft >= 3) {
-    colorClass = "bg-amber-100 text-amber-800";
+    colorClass = "bg-amber-400 text-amber-900 font-semibold";
+  } else if (daysLeft >= 1) {
+    colorClass = "bg-orange-500 text-white font-bold shadow-sm";
   }
 
   return { label, colorClass };
