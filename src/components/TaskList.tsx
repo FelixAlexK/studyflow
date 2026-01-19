@@ -1,7 +1,7 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, CheckCircle2, Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,6 +49,7 @@ export default function TaskList() {
   const updateTask = useConvexMutation(api.tasks.updateTask);
   const deleteTask = useConvexMutation(api.tasks.deleteTask);
   const updateTaskReminder = useConvexMutation(api.reminders.updateTaskReminder);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const [formValues, setFormValues] = useState({
     title: "",
@@ -71,6 +72,14 @@ export default function TaskList() {
 
   const toISODate = (value: string) => new Date(`${value}T00:00:00`).toISOString();
   const toDateInputValue = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+
+  const focusNewTask = () => {
+    setFormValues((prev) => ({
+      ...prev,
+      dueDate: prev.dueDate || new Date().toISOString().slice(0, 10),
+    }));
+    titleInputRef.current?.focus();
+  };
 
   const handleCreate = async () => {
     setFormError(null);
@@ -144,6 +153,7 @@ export default function TaskList() {
               <Input
                 placeholder="Task title"
                 value={formValues.title}
+                ref={titleInputRef}
                 onChange={(e) => setFormValues((prev) => ({ ...prev, title: e.target.value }))}
               />
               <textarea
@@ -211,10 +221,13 @@ export default function TaskList() {
         {!isLoading && !isError && sorted.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-8 text-center">
             <CheckCircle2 className="mb-3 h-12 w-12 text-muted-foreground/40" />
-            <h3 className="font-semibold text-muted-foreground">No tasks yet</h3>
+            <h3 className="font-semibold text-muted-foreground">Noch keine Aufgaben</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create a task above to get started tracking your work.
+              Lege deine erste Aufgabe an und halte Deadlines im Blick.
             </p>
+            <Button className="mt-4" variant="default" onClick={focusNewTask}>
+              Erste Aufgabe anlegen
+            </Button>
           </div>
         )}
 

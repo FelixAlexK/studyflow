@@ -1,5 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
@@ -60,7 +62,15 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
         <div className="space-y-2">
           <div className="text-sm font-semibold">Termine heute</div>
           {todaysEvents.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Keine Termine heute.</div>
+            <div className="rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-3 text-sm">
+              <div className="font-semibold text-muted-foreground">Keine Termine heute</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Plane einen Termin, damit er in deinem Tagesplan auftaucht.
+              </p>
+              <Link to="/calendar" className="mt-3 inline-block">
+                <Button size="sm" variant="outline">Termin anlegen</Button>
+              </Link>
+            </div>
           ) : (
             <ul className="space-y-2">
               {todaysEvents.map((event) => (
@@ -88,7 +98,15 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
         <div className="space-y-2">
           <div className="text-sm font-semibold">Heute fällige Aufgaben</div>
           {todaysTasks.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Keine Aufgaben fällig.</div>
+            <div className="rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-3 text-sm">
+              <div className="font-semibold text-muted-foreground">Keine Aufgaben fällig</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Lege die erste Aufgabe an und setze eine Frist für heute.
+              </p>
+              <Link to="/tasks" className="mt-3 inline-block">
+                <Button size="sm" variant="outline">Aufgabe anlegen</Button>
+              </Link>
+            </div>
           ) : (
             <ul className="space-y-2">
               {todaysTasks.map((task) => (

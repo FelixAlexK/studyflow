@@ -25,7 +25,7 @@ export default function LearningProgress() {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-500"
+              className="bg-linear-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-500"
               style={{ width: `${displayPercentage}%` }}
             />
           </div>
