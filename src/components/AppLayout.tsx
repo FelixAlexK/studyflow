@@ -1,8 +1,15 @@
-'use client';
+"use client";
 
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@workos/authkit-tanstack-react-start/client";
-import { Book, Calendar, CheckSquare, Home, Settings, Timer } from "lucide-react";
+import {
+	Book,
+	Calendar,
+	CheckSquare,
+	Home,
+	Settings,
+	Timer,
+} from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -23,7 +30,6 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-
 interface AppLayoutProps {
 	children: ReactNode;
 	headerTitle?: string;
@@ -31,9 +37,6 @@ interface AppLayoutProps {
 	rightPanel?: ReactNode;
 	showRightPanelDefault?: boolean;
 }
-
-
-
 
 interface NavigationItem {
 	title: string;
@@ -50,15 +53,14 @@ export default function AppLayout({
 }: AppLayoutProps) {
 	const [showRightPanel, setShowRightPanel] = useState(showRightPanelDefault);
 	const routerState = useRouterState();
-	 const { signOut, user } = useAuth();
+	const { signOut, user } = useAuth();
 	const handleSignOut = async () => {
 		try {
-			signOut({ returnTo: '/' });
+			signOut({ returnTo: "/" });
 		} catch (err) {
 			console.error("Sign up exception:", err);
 		}
 	};
-
 
 	// Use the better-auth hook to get the authenticated user
 	const navigationItems: NavigationItem[] = [
@@ -180,7 +182,9 @@ export default function AppLayout({
 									</span>
 								</div>
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-semibold">{user?.firstName}</span>
+									<span className="truncate font-semibold">
+										{user?.firstName}
+									</span>
 									<span className="truncate text-xs">{user?.email}</span>
 								</div>
 							</SidebarMenuButton>

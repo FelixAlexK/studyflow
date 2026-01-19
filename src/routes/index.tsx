@@ -23,22 +23,24 @@ import { api } from "../../convex/_generated/api";
 export const Route = createFileRoute("/")({
 	component: DashboardPage,
 	loader: async () => {
-	const { user} = await getAuth();
+		const { user } = await getAuth();
 
-	return { user };
-  },
+		return { user };
+	},
 });
 
 function DashboardPage() {
 	const { user } = useLoaderData({ from: "/" });
 	const { shouldShowOnboarding, markAsComplete } = useOnboarding();
 
-	const { data: numbers } = useQuery(convexQuery(api.myFunctions.listNumbers, {count: 10}));
+	const { data: numbers } = useQuery(
+		convexQuery(api.myFunctions.listNumbers, { count: 10 }),
+	);
 
 	return (
-		<AppLayout  headerTitle={`Welcome, ${user?.firstName || "User"}`}>
+		<AppLayout headerTitle={`Welcome, ${user?.firstName || "User"}`}>
 			{shouldShowOnboarding && <OnboardingFlow onComplete={markAsComplete} />}
-			
+
 			<div className="space-y-6">
 				<div>
 					<h2 className="text-2xl font-bold tracking-tight">
@@ -97,5 +99,5 @@ function DashboardPage() {
 				</Card>
 			</div>
 		</AppLayout>
-	)
+	);
 }
