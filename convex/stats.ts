@@ -77,3 +77,101 @@ export const logFocusSession = mutation({
     });
   },
 });
+
+// Helper function to check if a date is today
+const isToday = (isoString: string): boolean => {
+  const date = new Date(isoString);
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const endOfToday = startOfToday + 24 * 60 * 60 * 1000;
+  const timestamp = date.getTime();
+  return timestamp >= startOfToday && timestamp < endOfToday;
+};
+
+// Query: get today's stats summary
+export const getTodayStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get all tasks for today
+    const allTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    const todayTasks = allTasks.filter((task) => isToday(task.dueDate));
+    const completedTodayTasks = todayTasks.filter((task) => task.status === "done");
+
+    // Get focus sessions for today
+    const allSessions = await ctx.db
+      .query("focusSessions")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    const todaySessions = allSessions.filter((session) =>
+      isToday(session.completedAt),
+    );
+
+    // Get upcoming deadlines (next 7 days)
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+    const weekFromNow = startOfToday + 7 * 24 * 60 * 60 * 1000;
+
+    const upcomingTasks = allTasks.filter((task) => {
+      const taskTime = new Date(task.dueDate).getTime();
+      return taskTime >= startOfToday && taskTime <= weekFromNow && task.status !== "done";
+    });
+
+    // Get exams
+    const allExams = await ctx.db
+      .query("exams")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    const upcomingExams = allExams.filter((exam) => {
+      const examTime = new Date(exam.dateTime).getTime();
+      return examTime >= startOfToday && examTime <= weekFromNow;
+    });
+
+    // Get submissions
+    const allSubmissions = await ctx.db
+      .query("submissions")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    const upcomingSubmissions = allSubmissions.filter((submission) => {
+      const submissionTime = new Date(submission.dueDate).getTime();
+      return (
+        submissionTime >= startOfToday &&
+        submissionTime <= weekFromNow &&
+        submission.status !== "done"
+      );
+    });
+
+    return {
+      tasksToday: {
+        total: todayTasks.length,
+        completed: completedTodayTasks.length,
+      },
+      focusSessionsToday: todaySessions.length,
+      upcomingDeadlines: {
+        total: upcomingTasks.length + upcomingExams.length + upcomingSubmissions.length,
+        tasks: upcomingTasks.length,
+        exams: upcomingExams.length,
+        submissions: upcomingSubmissions.length,
+      },
+    };
+  },
+});

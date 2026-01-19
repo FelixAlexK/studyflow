@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
+import HeroStats from "@/components/HeroStats";
 import LearningCheckIns from "@/components/LearningCheckIns";
 import LearningProgress from "@/components/LearningProgress";
 import { OnboardingFlow, useOnboarding } from "@/components/OnboardingFlow";
@@ -50,6 +51,8 @@ function DashboardPage() {
 						Track your productivity and manage your tasks here.
 					</p>
 				</div>
+
+				{user?.id ? <HeroStats /> : null}
 
 				{user?.id ? <TodayImportant userId={user.id} /> : null}
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
