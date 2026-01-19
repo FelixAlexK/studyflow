@@ -1,5 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
 	const { user } = useLoaderData({ from: "/" });
 
-	const { data: numbers } = useSuspenseQuery(convexQuery(api.myFunctions.listNumbers, {count: 10}));
+	const { data: numbers } = useQuery(convexQuery(api.myFunctions.listNumbers, {count: 10}));
 
 	return (
 		<AppLayout  headerTitle={`Welcome, ${user?.firstName || "User"}`}>

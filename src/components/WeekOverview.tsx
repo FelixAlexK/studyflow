@@ -1,6 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { WeekOverviewSkeleton } from "@/components/SkeletonLoaders";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 
@@ -69,11 +70,15 @@ interface WeekOverviewProps {
 }
 
 export default function WeekOverview({ userId: _userId }: WeekOverviewProps) {
-  const { data: exams = [] } = useSuspenseQuery(convexQuery(api.exams.listExams, {}));
-  const { data: submissions = [] } = useSuspenseQuery(
+  const { data: exams = [], isLoading: examsLoading } = useQuery(convexQuery(api.exams.listExams, {}));
+  const { data: submissions = [], isLoading: submissionsLoading } = useQuery(
     convexQuery(api.submissions.listSubmissions, {}),
   );
-  const { data: tasks = [] } = useSuspenseQuery(convexQuery(api.tasks.listTasks, {}));
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery(convexQuery(api.tasks.listTasks, {}));
+  
+  if (examsLoading || submissionsLoading || tasksLoading) {
+    return <WeekOverviewSkeleton />;
+  }
 
   const items: Item[] = [
     ...(exams as Doc<"exams">[]).map((exam) => ({
