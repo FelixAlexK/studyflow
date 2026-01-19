@@ -5,6 +5,7 @@ import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
 import LearningCheckIns from "@/components/LearningCheckIns";
 import LearningProgress from "@/components/LearningProgress";
+import { OnboardingFlow, useOnboarding } from "@/components/OnboardingFlow";
 import ProductivityOverview from "@/components/ProductivityOverview";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
@@ -30,11 +31,14 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
 	const { user } = useLoaderData({ from: "/" });
+	const { shouldShowOnboarding, markAsComplete } = useOnboarding();
 
 	const { data: numbers } = useQuery(convexQuery(api.myFunctions.listNumbers, {count: 10}));
 
 	return (
 		<AppLayout  headerTitle={`Welcome, ${user?.firstName || "User"}`}>
+			{shouldShowOnboarding && <OnboardingFlow onComplete={markAsComplete} />}
+			
 			<div className="space-y-6">
 				<div>
 					<h2 className="text-2xl font-bold tracking-tight">
