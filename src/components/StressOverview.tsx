@@ -1,6 +1,7 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { StressOverviewSkeleton } from "@/components/SkeletonLoaders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,10 +63,10 @@ type Item =
     };
 
 export default function StressOverview() {
-  const { data: exams = [] } = useSuspenseQuery(convexQuery(api.exams.listExams, {}));
+  const { data: exams = [], isLoading: examsLoading } = useQuery(convexQuery(api.exams.listExams, {}));
   // Cast to any to allow compile before codegen picks up new Convex function
   const submissionsQuery = (api as any).submissions?.listSubmissions;
-  const { data: submissions = [] } = useSuspenseQuery(
+  const { data: submissions = [], isLoading: submissionsLoading } = useQuery(
     convexQuery(submissionsQuery, {}),
   );
   const updateExam = useConvexMutation(api.exams.updateExam);
@@ -73,6 +74,10 @@ export default function StressOverview() {
   const [learningGoals, setLearningGoals] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  
+  if (examsLoading || submissionsLoading) {
+    return <StressOverviewSkeleton />;
+  }
 
   const items: Item[] = [
     ...(exams as Doc<"exams">[]).map((exam) => ({

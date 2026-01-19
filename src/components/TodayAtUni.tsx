@@ -1,7 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { TodayAtUniSkeleton } from "@/components/SkeletonLoaders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -58,9 +59,13 @@ const isTodayLocal = (dateStr: string): boolean => {
 const TodayAtUni = ({ userId }: TodayAtUniProps) => {
   const [expandedEvents, setExpandedEvents] = useState<Set<Id<"events">>>(new Set());
 
-  const { data: events = [] } = useSuspenseQuery(
+  const { data: events = [], isLoading } = useQuery(
     convexQuery(api.events.listEvents, { userId })
   );
+  
+  if (isLoading) {
+    return <TodayAtUniSkeleton />;
+  }
 
   const todayEvents = (events as CalendarEvent[])
     .filter((event) => isTodayLocal(event.startDate))

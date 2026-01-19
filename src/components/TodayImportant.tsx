@@ -1,8 +1,9 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { TodayImportantSkeleton } from "@/components/SkeletonLoaders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../convex/_generated/api";
@@ -39,11 +40,18 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
   const [expandedTasks, setExpandedTasks] = useState<Set<Id<"tasks">>>(new Set());
   const [expandedEvents, setExpandedEvents] = useState<Set<Id<"events">>>(new Set());
 
-  const { data: events = [] } = useSuspenseQuery(
+  const { data: events = [], isLoading: eventsLoading } = useQuery(
     convexQuery(api.events.listEvents, { userId }),
   );
-  const { data: tasks = [] } = useSuspenseQuery(convexQuery(api.tasks.listTasks, {}));
-  const { data: exams = [] } = useSuspenseQuery(convexQuery(api.exams.listExams, {}));
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery(convexQuery(api.tasks.listTasks, {}));
+  const { data: exams = [], isLoading: examsLoading } = useQuery(convexQuery(api.exams.listExams, {}));
+  
+  const isLoading = eventsLoading || tasksLoading || examsLoading;
+  
+  if (isLoading) {
+    return <TodayImportantSkeleton />;
+  }
+  
   const todayExams = (exams as Doc<"exams">[])
     .filter((exam) => isToday(exam.dateTime))
     .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
