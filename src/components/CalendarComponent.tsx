@@ -6,6 +6,7 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -163,59 +164,110 @@ const CalendarComponent = ({ userId }: CalendarComponentProps) => {
 
   const handleEventDrop = async (dropInfo: EventDropArg) => {
     const event = dropInfo.event;
-    await updateEvent({
-      eventId: event.id as Id<"events">,
-      startDate: event.startStr,
-      endDate: event.endStr,
-    });
-    refetch();
+    try {
+      await updateEvent({
+        eventId: event.id as Id<"events">,
+        startDate: event.startStr,
+        endDate: event.endStr,
+      });
+      refetch();
+      toast.success("Termin verschoben", {
+        description: `„${event.title}" wurde erfolgreich verschoben.`,
+      });
+    } catch (err) {
+      toast.error("Fehler beim Verschieben", {
+        description: "Der Termin konnte nicht verschoben werden. Bitte versuche es erneut.",
+      });
+      dropInfo.revert();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (selectedEvent) {
-      // Update existing event
-      await updateEvent({
-        eventId: selectedEvent.id as Id<"events">,
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        allDay: formData.allDay,
-        isRecurring: formData.isRecurring,
-        recurrenceFrequency: formData.recurrenceFrequency || undefined,
-        recurrenceEndDate: formData.recurrenceEndDate || undefined,
-      });
-    } else {
-      // Create new event
-      await createEvent({
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        allDay: formData.allDay,
-        isRecurring: formData.isRecurring,
-        recurrenceFrequency: formData.recurrenceFrequency || undefined,
-        recurrenceEndDate: formData.recurrenceEndDate || undefined,
+    try {
+      if (selectedEvent) {
+        // Update existing event
+        await updateEvent({
+          eventId: selectedEvent.id as Id<"events">,
+          title: formData.title,
+          description: formData.description,
+          type: formData.type,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          allDay: formData.allDay,
+          isRecurring: formData.isRecurring,
+          recurrenceFrequency: formData.recurrenceFrequency || undefined,
+          recurrenceEndDate: formData.recurrenceEndDate || undefined,
+        });
+        toast.success("Termin aktualisiert", {
+          description: `„${formData.title}" wurde erfolgreich gespeichert.`,
+        });
+      } else {
+        // Create new event
+        await createEvent({
+          title: formData.title,
+          description: formData.description,
+          type: formData.type,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          allDay: formData.allDay,
+          isRecurring: formData.isRecurring,
+          recurrenceFrequency: formData.recurrenceFrequency || undefined,
+          recurrenceEndDate: formData.recurrenceEndDate || undefined,
+        });
+        toast.success("Termin erstellt", {
+          description: `„${formData.title}" wurde erfolgreich angelegt.`,
+        });
+      }
+      
+      refetch();
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err) {
+      toast.error(selectedEvent ? "Fehler beim Aktualisieren" : "Fehler beim Erstellen", {
+        description: "Der Termin konnte nicht gespeichert werden. Bitte versuche es erneut.",
       });
     }
-    
-    refetch();
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleDelete = async () => {
     if (selectedEvent) {
-      await deleteEvent({
-        eventId: selectedEvent.id as Id<"events">,
-      });
-      refetch();
+      const eventTitle = selectedEvent.title;
+      let undoTimeout: NodeJS.Timeout | null = null;
+      let isUndone = false;
+
+      const performDelete = async () => {
+        if (isUndone) return;
+        try {
+          await deleteEvent({
+            eventId: selectedEvent.id as Id<"events">,
+          });
+          refetch();
+        } catch (err) {
+          toast.error("Fehler beim Löschen", {
+            description: "Der Termin konnte nicht gelöscht werden. Bitte versuche es erneut.",
+          });
+        }
+      };
+
       setIsDialogOpen(false);
       resetForm();
+
+      undoTimeout = setTimeout(performDelete, 5000);
+
+      toast.warning(`„${eventTitle}" wird in 5 Sekunden gelöscht`, {
+        action: {
+          label: "Rückgängig",
+          onClick: () => {
+            isUndone = true;
+            if (undoTimeout) clearTimeout(undoTimeout);
+            toast.success("Rückgängig gemacht", {
+              description: `„${eventTitle}" wurde nicht gelöscht.`,
+            });
+          },
+        },
+      });
     }
   };
 

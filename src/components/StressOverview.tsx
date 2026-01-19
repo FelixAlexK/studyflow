@@ -1,6 +1,7 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { StressOverviewSkeleton } from "@/components/SkeletonLoaders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,8 +156,15 @@ export default function StressOverview() {
                                 examId: item.id as Id<"exams">,
                                 learningGoal: value.trim() || undefined,
                               });
+                              toast.success("✓ Lernziel gespeichert", {
+                                description: "Das Lernziel wurde erfolgreich aktualisiert.",
+                              });
                             } catch (err) {
-                              setSaveError("Speichern fehlgeschlagen. Bitte erneut versuchen.");
+                              const errorMessage = "Speichern fehlgeschlagen. Bitte erneut versuchen.";
+                              setSaveError(errorMessage);
+                              toast.error("Fehler beim Speichern", {
+                                description: errorMessage,
+                              });
                             } finally {
                               setSavingId(null);
                             }

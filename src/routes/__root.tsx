@@ -15,6 +15,7 @@ import NotificationCenter from "@/components/NotificationCenter";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import QuickCreateModal from "@/components/QuickCreateModal";
 import ReminderChecker from "@/components/ReminderChecker";
+import { Toaster } from "@/components/ui/sonner";
 import appCssUrl from "../styles.css?url";
 
 const fetchWorkosAuth = createServerFn({ method: "GET" }).handler(async () => {
@@ -86,6 +87,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 						<QuickCreateModal />
 						{children}
 						<NotificationCenter />
+						<Toaster />
 					</NotificationProvider>
 				</ErrorBoundary>
 				<Scripts />

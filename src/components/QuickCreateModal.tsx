@@ -3,6 +3,7 @@
 import { useConvexMutation } from "@convex-dev/react-query";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -120,6 +121,9 @@ export default function QuickCreateModal() {
           dueDate,
           status: "todo",
         });
+        toast.success("Aufgabe erstellt", {
+          description: `„${title.trim()}" wurde erfolgreich hinzugefügt.`,
+        });
       } else if (createType === "exam") {
         if (!subject.trim()) {
           setError("Fach ist erforderlich.");
@@ -139,6 +143,9 @@ export default function QuickCreateModal() {
           dateTime,
           location: location.trim() || undefined,
           learningGoal: description.trim() || undefined,
+        });
+        toast.success("Prüfung erstellt", {
+          description: `${subject.trim()} wurde erfolgreich angelegt.`,
         });
       } else if (createType === "event") {
         if (!title.trim()) {
@@ -160,6 +167,9 @@ export default function QuickCreateModal() {
           isRecurring: isRecurring,
           recurrenceFrequency: isRecurring ? "weekly" : undefined,
         });
+        toast.success("Termin erstellt", {
+          description: `„${title.trim()}" wurde erfolgreich angelegt.`,
+        });
       }
 
       handleClose();
@@ -167,6 +177,9 @@ export default function QuickCreateModal() {
       const errorMessage =
         err instanceof Error ? err.message : "Erstellung fehlgeschlagen.";
       setError(errorMessage);
+      toast.error("Fehler beim Erstellen", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

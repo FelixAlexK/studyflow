@@ -2,6 +2,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, CheckCircle2, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -106,10 +107,16 @@ export default function TaskList() {
       });
       setFormValues({ title: "", description: "", dueDate: "", status: "todo" });
       void refetch();
+      toast.success("Aufgabe erstellt", {
+        description: `„${formValues.title.trim()}" wurde erfolgreich hinzugefügt.`,
+      });
     } catch (err) {
       const message = getUserFriendlyMessage(err);
       logError(err, "TaskList.handleCreate");
       setFormError(message);
+      toast.error("Fehler beim Erstellen", {
+        description: message || "Die Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
+      });
     }
   };
 
@@ -118,18 +125,53 @@ export default function TaskList() {
       const nextStatus = task.status === "done" ? "todo" : "done";
       await updateTask({ taskId: task._id, status: nextStatus });
       void refetch();
+      toast.success(nextStatus === "done" ? "Aufgabe erledigt" : "Aufgabe reaktiviert", {
+        description: `„${task.title}" wurde als ${nextStatus === "done" ? "erledigt" : "offen"} markiert.`,
+      });
     } catch (err) {
+      const message = getUserFriendlyMessage(err);
       logError(err, "TaskList.handleToggleComplete");
+      toast.error("Fehler beim Aktualisieren", {
+        description: message || "Die Aufgabe konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+      });
     }
   };
 
   const handleDelete = async (taskId: Id<"tasks">) => {
-    try {
-      await deleteTask({ taskId });
-      void refetch();
-    } catch (err) {
-      logError(err, "TaskList.handleDelete");
-    }
+    const taskToDelete = tasks.find((t: Task) => t._id === taskId);
+    if (!taskToDelete) return;
+
+    let undoTimeout: NodeJS.Timeout | null = null;
+    let isUndone = false;
+
+    const performDelete = async () => {
+      if (isUndone) return;
+      try {
+        await deleteTask({ taskId });
+        void refetch();
+      } catch (err) {
+        const message = getUserFriendlyMessage(err);
+        logError(err, "TaskList.handleDelete");
+        toast.error("Fehler beim Löschen", {
+          description: message || "Die Aufgabe konnte nicht gelöscht werden. Bitte versuche es erneut.",
+        });
+      }
+    };
+
+    undoTimeout = setTimeout(performDelete, 5000);
+
+    toast.warning(`„${taskToDelete.title}" wird in 5 Sekunden gelöscht`, {
+      action: {
+        label: "Rückgängig",
+        onClick: () => {
+          isUndone = true;
+          if (undoTimeout) clearTimeout(undoTimeout);
+          toast.success("Rückgängig gemacht", {
+            description: `„${taskToDelete.title}" wurde nicht gelöscht.`,
+          });
+        },
+      },
+    });
   };
 
   const sorted = useMemo(
@@ -310,10 +352,16 @@ export default function TaskList() {
                                   });
                                   setEditingId(null);
                                   void refetch();
+                                  toast.success("Aufgabe aktualisiert", {
+                                    description: `„${editValues.title.trim()}" wurde erfolgreich gespeichert.`,
+                                  });
                                 } catch (err) {
                                   const message = getUserFriendlyMessage(err);
                                   logError(err, "TaskList.handleSaveEdit");
                                   setEditError(message);
+                                  toast.error("Fehler beim Speichern", {
+                                    description: message || "Die Änderungen konnten nicht gespeichert werden. Bitte versuche es erneut.",
+                                  });
                                 }
                               }}
                             >

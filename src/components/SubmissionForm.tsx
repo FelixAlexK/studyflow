@@ -1,5 +1,6 @@
 import { useMutation } from "convex/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,11 +62,17 @@ export default function SubmissionForm({ onSuccess }: SubmissionFormProps) {
         dueDate: "",
       });
 
+      toast.success("Abgabe erstellt", {
+        description: `${formValues.title.trim()} wurde erfolgreich angelegt.`,
+      });
+
       onSuccess?.();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Abgabe konnte nicht erstellt werden.",
-      );
+      const errorMessage = err instanceof Error ? err.message : "Abgabe konnte nicht erstellt werden.";
+      setError(errorMessage);
+      toast.error("Fehler beim Erstellen", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
