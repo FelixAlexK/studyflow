@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
+import CompactCalendar from "@/components/CompactCalendar";
 import HeroStats from "@/components/HeroStats";
 import LearningCheckIns from "@/components/LearningCheckIns";
 import LearningProgress from "@/components/LearningProgress";
@@ -52,21 +53,19 @@ function DashboardPage() {
 						Track your productivity and manage your tasks here.
 					</p>
 				</div>
-
 				{user?.id ? <HeroStats /> : null}
-				{user?.id ? <PriorityTasks /> : null}
+				{user?.id ? <PriorityTasks /> : null}{" "}
+				{user?.id ? <CompactCalendar userId={user.id} /> : null}{" "}
 				{user?.id ? <TodayImportant userId={user.id} /> : null}
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
 				{user?.id ? <StressOverview /> : null}
 				{user?.id ? <WeekOverview userId={user.id} /> : null}
 				{user?.id ? <LearningProgress /> : null}
 				{user?.id ? <LearningCheckIns /> : null}
-
 				<div>
 					<h3 className="mb-4 text-lg font-semibold">Your Progress</h3>
 					<ProductivityOverview />
 				</div>
-
 				<Card>
 					<CardHeader>
 						<CardTitle>Your Tasks</CardTitle>
