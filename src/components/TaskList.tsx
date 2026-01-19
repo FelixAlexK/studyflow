@@ -1,6 +1,6 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import { Bell, CheckCircle2, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,13 +28,15 @@ const getCountdownInfo = (dueDate: string) => {
   const abs = Math.abs(daysLeft);
   const label = daysLeft >= 0
     ? `Noch ${daysLeft} Tag${daysLeft === 1 ? "" : "e"}`
-    : `Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
+    : `⚠️ Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
 
-  let colorClass = "bg-red-100 text-red-800";
+  let colorClass = "bg-red-600 text-white font-bold shadow-sm";
   if (daysLeft > 7) {
-    colorClass = "bg-green-100 text-green-800";
+    colorClass = "bg-green-100 text-green-800 font-medium";
   } else if (daysLeft >= 3) {
-    colorClass = "bg-amber-100 text-amber-800";
+    colorClass = "bg-amber-400 text-amber-900 font-semibold";
+  } else if (daysLeft >= 1) {
+    colorClass = "bg-orange-500 text-white font-bold shadow-sm";
   }
 
   return { label, colorClass };
@@ -68,6 +70,7 @@ export default function TaskList() {
   });
   const [editError, setEditError] = useState<string | null>(null);
   const [expandedReminderId, setExpandedReminderId] = useState<Id<"tasks"> | null>(null);
+  const [expandedTasks, setExpandedTasks] = useState<Set<Id<"tasks">>>(new Set());
   const [reminderMinutes, setReminderMinutes] = useState<Record<string, number>>({});
 
   const toISODate = (value: string) => new Date(`${value}T00:00:00`).toISOString();
@@ -235,18 +238,15 @@ export default function TaskList() {
           <div className="divide-y rounded-md border">
             {sorted.map((task) => {
               const isDone = task.status === "done";
+              const isExpanded = expandedTasks.has(task._id);
+              const hasDetails = !!task.description;
               return (
                 <div
                   key={task._id}
-                  className="flex items-start gap-3 p-3 hover:bg-muted/50"
+                  className="hover:bg-muted/50"
                 >
-                  <Checkbox
-                    checked={isDone}
-                    onCheckedChange={() => handleToggleComplete(task)}
-                    aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
-                  />
-                  <div className="flex-1 space-y-2">
-                    {editingId === task._id ? (
+                  {editingId === task._id ? (
+                    <div className="p-3">
                       <div className="space-y-2 rounded-md border bg-muted/20 p-3">
                         <Input
                           value={editValues.title}
@@ -335,127 +335,170 @@ export default function TaskList() {
                           </div>
                         )}
                       </div>
+                    </div>
                     ) : (
-                      <>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>
-                              {task.title}
+                      <div className="flex items-start gap-3 p-3">
+                        <Checkbox
+                          checked={isDone}
+                          onCheckedChange={() => handleToggleComplete(task)}
+                          aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className={`font-medium wrap-break-word ${
+                                isDone ? "line-through text-muted-foreground" : ""
+                              }`}>
+                                {task.title}
+                              </div>
                             </div>
-                            {task.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {task.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label="Configure reminder"
-                              onClick={() => setExpandedReminderId(expandedReminderId === task._id ? null : task._id)}
-                            >
-                              <Bell className={`h-4 w-4 ${task.reminderEnabled ? "fill-current text-blue-600" : ""}`} />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label="Edit task"
-                              onClick={() => {
-                                setEditingId(task._id);
-                                setEditError(null);
-                                setEditValues({
-                                  title: task.title,
-                                  description: task.description ?? "",
-                                  dueDate: toDateInputValue(task.dueDate),
-                                  status: task.status,
-                                });
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label="Delete task"
-                              onClick={() => handleDelete(task._id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
-                            <CheckCircle2 className="h-3 w-3" /> {statusLabel[task.status]}
-                          </span>
-                          <Separator orientation="vertical" className="h-4" />
-                          <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                          {task.status !== "done" && (() => {
-                            const { label, colorClass } = getCountdownInfo(task.dueDate);
-                            return (
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${colorClass}`}>
-                                {label}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                        {expandedReminderId === task._id && (
-                          <div className="mt-3 space-y-3 rounded-md border bg-muted/20 p-3">
-                            <div className="flex items-center gap-2">
-                              <input
-                                id={`reminder-${String(task._id)}`}
-                                type="checkbox"
-                                checked={task.reminderEnabled ?? false}
-                                onChange={async (e) => {
-                                  await updateTaskReminder({
-                                    taskId: task._id,
-                                    reminderEnabled: e.target.checked,
-                                  });
-                                  void refetch();
+                            <div className="flex gap-1 shrink-0">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Configure reminder"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedReminderId(expandedReminderId === task._id ? null : task._id);
                                 }}
-                                className="h-4 w-4 rounded border-gray-300"
-                              />
-                              <label htmlFor={`reminder-${String(task._id)}`} className="text-sm font-medium">Enable reminder</label>
+                              >
+                                <Bell className={`h-4 w-4 ${task.reminderEnabled ? "fill-current text-blue-600" : ""}`} />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Edit task"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingId(task._id);
+                                  setEditError(null);
+                                  setEditValues({
+                                    title: task.title,
+                                    description: task.description ?? "",
+                                    dueDate: toDateInputValue(task.dueDate),
+                                    status: task.status,
+                                  });
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Delete task"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(task._id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
-                            {task.reminderEnabled && (
-                              <div className="space-y-2">
-                                <label htmlFor={`reminder-minutes-${String(task._id)}`} className="text-xs font-medium">Notify me:</label>
-                                <select
-                                  id={`reminder-minutes-${String(task._id)}`}
-                                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
-                                  value={reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440}
-                                  onChange={(e) => {
-                                    const minutes = parseInt(e.target.value, 10);
-                                    setReminderMinutes((prev) => ({ ...prev, [String(task._id)]: minutes }));
-                                  }}
-                                >
-                                  <option value="60">1 hour before</option>
-                                  <option value="360">6 hours before</option>
-                                  <option value="1440">1 day before</option>
-                                  <option value="2880">2 days before</option>
-                                </select>
-                                <Button
-                                  size="sm"
-                                  className="w-full"
-                                  onClick={async () => {
-                                    const minutes = reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440;
+                          </div>
+                          
+                          {/* Always visible: Status, Due Date, Countdown */}
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
+                              <CheckCircle2 className="h-3 w-3" /> {statusLabel[task.status]}
+                            </span>
+                            <Separator orientation="vertical" className="h-4" />
+                            <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                            {task.status !== "done" && (() => {
+                              const { label, colorClass } = getCountdownInfo(task.dueDate);
+                              return (
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${colorClass}`}>
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Description: Collapsible if exists */}
+                          {hasDetails && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSet = new Set(expandedTasks);
+                                if (isExpanded) {
+                                  newSet.delete(task._id);
+                                } else {
+                                  newSet.add(task._id);
+                                }
+                                setExpandedTasks(newSet);
+                              }}
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <span>{isExpanded ? "Beschreibung ausblenden" : "Beschreibung anzeigen"}</span>
+                              <ChevronDown
+                                className={`h-3 w-3 transition-transform ${
+                                  isExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                          )}
+                          {isExpanded && task.description && (
+                            <div className="text-sm text-muted-foreground pt-1 border-t">
+                              {task.description}
+                            </div>
+                          )}
+                          {expandedReminderId === task._id && (
+                            <div className="mt-3 space-y-3 rounded-md border bg-muted/20 p-3">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  id={`reminder-${String(task._id)}`}
+                                  type="checkbox"
+                                  checked={task.reminderEnabled ?? false}
+                                  onChange={async (e) => {
                                     await updateTaskReminder({
                                       taskId: task._id,
-                                      reminderMinutesBefore: minutes,
+                                      reminderEnabled: e.target.checked,
                                     });
                                     void refetch();
-                                    setExpandedReminderId(null);
                                   }}
-                                >
-                                  Save
-                                </Button>
+                                  className="h-4 w-4 rounded border-gray-300"
+                                />
+                                <label htmlFor={`reminder-${String(task._id)}`} className="text-sm font-medium">Enable reminder</label>
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </>
+                              {task.reminderEnabled && (
+                                <div className="space-y-2">
+                                  <label htmlFor={`reminder-minutes-${String(task._id)}`} className="text-xs font-medium">Notify me:</label>
+                                  <select
+                                    id={`reminder-minutes-${String(task._id)}`}
+                                    className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
+                                    value={reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440}
+                                    onChange={(e) => {
+                                      const minutes = parseInt(e.target.value, 10);
+                                      setReminderMinutes((prev) => ({ ...prev, [String(task._id)]: minutes }));
+                                    }}
+                                  >
+                                    <option value="60">1 hour before</option>
+                                    <option value="360">6 hours before</option>
+                                    <option value="1440">1 day before</option>
+                                    <option value="2880">2 days before</option>
+                                  </select>
+                                  <Button
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={async () => {
+                                      const minutes = reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440;
+                                      await updateTaskReminder({
+                                        taskId: task._id,
+                                        reminderMinutesBefore: minutes,
+                                      });
+                                      void refetch();
+                                      setExpandedReminderId(null);
+                                    }}
+                                  >
+                                    Save
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </div>
                 </div>
               );
             })}

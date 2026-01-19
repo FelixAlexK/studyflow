@@ -1,5 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -54,6 +56,8 @@ const isTodayLocal = (dateStr: string): boolean => {
 };
 
 const TodayAtUni = ({ userId }: TodayAtUniProps) => {
+  const [expandedEvents, setExpandedEvents] = useState<Set<Id<"events">>>(new Set());
+
   const { data: events = [] } = useSuspenseQuery(
     convexQuery(api.events.listEvents, { userId })
   );
@@ -77,29 +81,58 @@ const TodayAtUni = ({ userId }: TodayAtUniProps) => {
             {todayEvents.map((event) => {
               const type = event.type;
               const colorClass = typeColors[type];
+              const isExpanded = expandedEvents.has(event._id);
+              const hasDetails = !!event.description;
               return (
                 <div
                   key={event._id}
-                  className="flex items-start justify-between rounded-lg border bg-muted/40 px-3 py-2"
+                  className="rounded-lg border bg-muted/40"
                 >
-                  <div className="flex flex-col gap-1">
-                    <div className="font-semibold">{event.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {event.allDay
-                        ? "Ganztägig"
-                        : `${formatTime(event.startDate)}${event.endDate ? ` – ${formatTime(event.endDate)}` : ""}`}
-                    </div>
-                    {event.description && (
-                      <div className="text-xs text-muted-foreground line-clamp-2">
-                        {event.description}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${colorClass}`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!hasDetails) return;
+                      const newSet = new Set(expandedEvents);
+                      if (isExpanded) {
+                        newSet.delete(event._id);
+                      } else {
+                        newSet.add(event._id);
+                      }
+                      setExpandedEvents(newSet);
+                    }}
+                    className={`w-full flex items-start justify-between px-3 py-2 text-left ${
+                      hasDetails ? "hover:bg-muted/60 transition-colors" : ""
+                    }`}
+                    disabled={!hasDetails}
                   >
-                    {typeLabels[type]}
-                  </span>
+                    <div className="flex flex-col gap-1">
+                      <div className="font-semibold">{event.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {event.allDay
+                          ? "Ganztägig"
+                          : `${formatTime(event.startDate)}${event.endDate ? ` – ${formatTime(event.endDate)}` : ""}`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${colorClass}`}
+                      >
+                        {typeLabels[type]}
+                      </span>
+                      {hasDetails && (
+                        <ChevronDown
+                          className={`h-4 w-4 text-muted-foreground transition-transform shrink-0 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </button>
+                  {isExpanded && event.description && (
+                    <div className="px-3 pb-2 text-xs text-muted-foreground border-t pt-2">
+                      {event.description}
+                    </div>
+                  )}
                 </div>
               );
             })}
