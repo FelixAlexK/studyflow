@@ -4,11 +4,18 @@ import { Bell, CheckCircle2, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFirstSuccess } from "@/hooks/use-first-success";
 import { getUserFriendlyMessage, logError } from "@/lib/error-handler";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
@@ -16,543 +23,653 @@ import type { Doc, Id } from "../../convex/_generated/dataModel";
 type Task = Doc<"tasks">;
 
 const statusLabel: Record<Task["status"], string> = {
-  todo: "To do",
-  in_progress: "In progress",
-  done: "Done",
+	todo: "To do",
+	in_progress: "In progress",
+	done: "Done",
 };
 
 const getCountdownInfo = (dueDate: string) => {
-  const now = new Date();
-  const due = new Date(dueDate);
-  const daysLeft = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+	const now = new Date();
+	const due = new Date(dueDate);
+	const daysLeft = Math.ceil(
+		(due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+	);
 
-  const abs = Math.abs(daysLeft);
-  const label = daysLeft >= 0
-    ? `Noch ${daysLeft} Tag${daysLeft === 1 ? "" : "e"}`
-    : `⚠️ Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
+	const abs = Math.abs(daysLeft);
+	const label =
+		daysLeft >= 0
+			? `Noch ${daysLeft} Tag${daysLeft === 1 ? "" : "e"}`
+			: `⚠️ Überfällig ${abs} Tag${abs === 1 ? "" : "e"}`;
 
-  let colorClass = "bg-red-600 text-white font-bold shadow-sm";
-  if (daysLeft > 7) {
-    colorClass = "bg-green-100 text-green-800 font-medium";
-  } else if (daysLeft >= 3) {
-    colorClass = "bg-amber-400 text-amber-900 font-semibold";
-  } else if (daysLeft >= 1) {
-    colorClass = "bg-orange-500 text-white font-bold shadow-sm";
-  }
+	let colorClass = "bg-red-600 text-white font-bold shadow-sm";
+	if (daysLeft > 7) {
+		colorClass = "bg-green-100 text-green-800 font-medium";
+	} else if (daysLeft >= 3) {
+		colorClass = "bg-amber-400 text-amber-900 font-semibold";
+	} else if (daysLeft >= 1) {
+		colorClass = "bg-orange-500 text-white font-bold shadow-sm";
+	}
 
-  return { label, colorClass };
+	return { label, colorClass };
 };
 
 export default function TaskList() {
-  const { data: tasks = [], isLoading, isError, refetch } = useQuery(
-    convexQuery(api.tasks.listTasks, {}),
-  );
+	const {
+		data: tasks = [],
+		isLoading,
+		isError,
+		refetch,
+	} = useQuery(convexQuery(api.tasks.listTasks, {}));
+	const { celebrateFirstSuccess } = useFirstSuccess();
 
-  const createTask = useConvexMutation(api.tasks.createTask);
-  const updateTask = useConvexMutation(api.tasks.updateTask);
-  const deleteTask = useConvexMutation(api.tasks.deleteTask);
-  const updateTaskReminder = useConvexMutation(api.reminders.updateTaskReminder);
-  const titleInputRef = useRef<HTMLInputElement>(null);
+	const createTask = useConvexMutation(api.tasks.createTask);
+	const updateTask = useConvexMutation(api.tasks.updateTask);
+	const deleteTask = useConvexMutation(api.tasks.deleteTask);
+	const updateTaskReminder = useConvexMutation(
+		api.reminders.updateTaskReminder,
+	);
+	const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const [formValues, setFormValues] = useState({
-    title: "",
-    description: "",
-    dueDate: "",
-    status: "todo" as Task["status"],
-  });
-  const [formError, setFormError] = useState<string | null>(null);
+	const [formValues, setFormValues] = useState({
+		title: "",
+		description: "",
+		dueDate: "",
+		status: "todo" as Task["status"],
+	});
+	const [formError, setFormError] = useState<string | null>(null);
 
-  const [editingId, setEditingId] = useState<Id<"tasks"> | null>(null);
-  const [editValues, setEditValues] = useState({
-    title: "",
-    description: "",
-    dueDate: "",
-    status: "todo" as Task["status"],
-  });
-  const [editError, setEditError] = useState<string | null>(null);
-  const [expandedReminderId, setExpandedReminderId] = useState<Id<"tasks"> | null>(null);
-  const [expandedTasks, setExpandedTasks] = useState<Set<Id<"tasks">>>(new Set());
-  const [reminderMinutes, setReminderMinutes] = useState<Record<string, number>>({});
+	const [editingId, setEditingId] = useState<Id<"tasks"> | null>(null);
+	const [editValues, setEditValues] = useState({
+		title: "",
+		description: "",
+		dueDate: "",
+		status: "todo" as Task["status"],
+	});
+	const [editError, setEditError] = useState<string | null>(null);
+	const [expandedReminderId, setExpandedReminderId] =
+		useState<Id<"tasks"> | null>(null);
+	const [expandedTasks, setExpandedTasks] = useState<Set<Id<"tasks">>>(
+		new Set(),
+	);
+	const [reminderMinutes, setReminderMinutes] = useState<
+		Record<string, number>
+	>({});
 
-  const toISODate = (value: string) => new Date(`${value}T00:00:00`).toISOString();
-  const toDateInputValue = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+	const toISODate = (value: string) =>
+		new Date(`${value}T00:00:00`).toISOString();
+	const toDateInputValue = (iso: string) =>
+		new Date(iso).toISOString().slice(0, 10);
 
-  const focusNewTask = () => {
-    setFormValues((prev) => ({
-      ...prev,
-      dueDate: prev.dueDate || new Date().toISOString().slice(0, 10),
-    }));
-    titleInputRef.current?.focus();
-  };
+	const focusNewTask = () => {
+		setFormValues((prev) => ({
+			...prev,
+			dueDate: prev.dueDate || new Date().toISOString().slice(0, 10),
+		}));
+		titleInputRef.current?.focus();
+	};
 
-  const handleCreate = async () => {
-    setFormError(null);
+	const handleCreate = async () => {
+		setFormError(null);
 
-    if (!formValues.title.trim()) {
-      setFormError("Title is required.");
-      return;
-    }
+		if (!formValues.title.trim()) {
+			setFormError("Title is required.");
+			return;
+		}
 
-    if (!formValues.dueDate) {
-      setFormError("Due date is required.");
-      return;
-    }
+		if (!formValues.dueDate) {
+			setFormError("Due date is required.");
+			return;
+		}
 
-    try {
-      await createTask({
-        title: formValues.title.trim(),
-        description: formValues.description.trim() || undefined,
-        dueDate: toISODate(formValues.dueDate),
-        status: formValues.status,
-      });
-      setFormValues({ title: "", description: "", dueDate: "", status: "todo" });
-      void refetch();
-      toast.success("Aufgabe erstellt", {
-        description: `„${formValues.title.trim()}" wurde erfolgreich hinzugefügt.`,
-      });
-    } catch (err) {
-      const message = getUserFriendlyMessage(err);
-      logError(err, "TaskList.handleCreate");
-      setFormError(message);
-      toast.error("Fehler beim Erstellen", {
-        description: message || "Die Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
-      });
-    }
-  };
+		try {
+			await createTask({
+				title: formValues.title.trim(),
+				description: formValues.description.trim() || undefined,
+				dueDate: toISODate(formValues.dueDate),
+				status: formValues.status,
+			});
+			setFormValues({
+				title: "",
+				description: "",
+				dueDate: "",
+				status: "todo",
+			});
+			void refetch();
+			toast.success("Aufgabe erstellt", {
+				description: `„${formValues.title.trim()}" wurde erfolgreich hinzugefügt.`,
+			});
+			celebrateFirstSuccess("task");
+		} catch (err) {
+			const message = getUserFriendlyMessage(err);
+			logError(err, "TaskList.handleCreate");
+			setFormError(message);
+			toast.error("Fehler beim Erstellen", {
+				description:
+					message ||
+					"Die Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
+			});
+		}
+	};
 
-  const handleToggleComplete = async (task: Task) => {
-    try {
-      const nextStatus = task.status === "done" ? "todo" : "done";
-      await updateTask({ taskId: task._id, status: nextStatus });
-      void refetch();
-      toast.success(nextStatus === "done" ? "Aufgabe erledigt" : "Aufgabe reaktiviert", {
-        description: `„${task.title}" wurde als ${nextStatus === "done" ? "erledigt" : "offen"} markiert.`,
-      });
-    } catch (err) {
-      const message = getUserFriendlyMessage(err);
-      logError(err, "TaskList.handleToggleComplete");
-      toast.error("Fehler beim Aktualisieren", {
-        description: message || "Die Aufgabe konnte nicht aktualisiert werden. Bitte versuche es erneut.",
-      });
-    }
-  };
+	const handleToggleComplete = async (task: Task) => {
+		try {
+			const nextStatus = task.status === "done" ? "todo" : "done";
+			await updateTask({ taskId: task._id, status: nextStatus });
+			void refetch();
+			toast.success(
+				nextStatus === "done" ? "Aufgabe erledigt" : "Aufgabe reaktiviert",
+				{
+					description: `„${task.title}" wurde als ${nextStatus === "done" ? "erledigt" : "offen"} markiert.`,
+				},
+			);
+		} catch (err) {
+			const message = getUserFriendlyMessage(err);
+			logError(err, "TaskList.handleToggleComplete");
+			toast.error("Fehler beim Aktualisieren", {
+				description:
+					message ||
+					"Die Aufgabe konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+			});
+		}
+	};
 
-  const handleDelete = async (taskId: Id<"tasks">) => {
-    const taskToDelete = tasks.find((t: Task) => t._id === taskId);
-    if (!taskToDelete) return;
+	const handleDelete = async (taskId: Id<"tasks">) => {
+		const taskToDelete = tasks.find((t: Task) => t._id === taskId);
+		if (!taskToDelete) return;
 
-    let undoTimeout: NodeJS.Timeout | null = null;
-    let isUndone = false;
+		let undoTimeout: NodeJS.Timeout | null = null;
+		let isUndone = false;
 
-    const performDelete = async () => {
-      if (isUndone) return;
-      try {
-        await deleteTask({ taskId });
-        void refetch();
-      } catch (err) {
-        const message = getUserFriendlyMessage(err);
-        logError(err, "TaskList.handleDelete");
-        toast.error("Fehler beim Löschen", {
-          description: message || "Die Aufgabe konnte nicht gelöscht werden. Bitte versuche es erneut.",
-        });
-      }
-    };
+		const performDelete = async () => {
+			if (isUndone) return;
+			try {
+				await deleteTask({ taskId });
+				void refetch();
+			} catch (err) {
+				const message = getUserFriendlyMessage(err);
+				logError(err, "TaskList.handleDelete");
+				toast.error("Fehler beim Löschen", {
+					description:
+						message ||
+						"Die Aufgabe konnte nicht gelöscht werden. Bitte versuche es erneut.",
+				});
+			}
+		};
 
-    undoTimeout = setTimeout(performDelete, 5000);
+		undoTimeout = setTimeout(performDelete, 5000);
 
-    toast.warning(`„${taskToDelete.title}" wird in 5 Sekunden gelöscht`, {
-      action: {
-        label: "Rückgängig",
-        onClick: () => {
-          isUndone = true;
-          if (undoTimeout) clearTimeout(undoTimeout);
-          toast.success("Rückgängig gemacht", {
-            description: `„${taskToDelete.title}" wurde nicht gelöscht.`,
-          });
-        },
-      },
-    });
-  };
+		toast.warning(`„${taskToDelete.title}" wird in 5 Sekunden gelöscht`, {
+			action: {
+				label: "Rückgängig",
+				onClick: () => {
+					isUndone = true;
+					if (undoTimeout) clearTimeout(undoTimeout);
+					toast.success("Rückgängig gemacht", {
+						description: `„${taskToDelete.title}" wurde nicht gelöscht.`,
+					});
+				},
+			},
+		});
+	};
 
-  const sorted = useMemo(
-    () =>
-      [...tasks].sort((a, b) => {
-        // Sort by completion then due date then title
-        if (a.status === "done" && b.status !== "done") return 1;
-        if (a.status !== "done" && b.status === "done") return -1;
-        return a.dueDate.localeCompare(b.dueDate) || a.title.localeCompare(b.title);
-      }),
-    [tasks],
-  );
+	const sorted = useMemo(
+		() =>
+			[...tasks].sort((a, b) => {
+				// Sort by completion then due date then title
+				if (a.status === "done" && b.status !== "done") return 1;
+				if (a.status !== "done" && b.status === "done") return -1;
+				return (
+					a.dueDate.localeCompare(b.dueDate) || a.title.localeCompare(b.title)
+				);
+			}),
+		[tasks],
+	);
 
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Tasks</CardTitle>
-        <CardDescription>Track tasks, mark complete, and clear them out.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2 rounded-md border p-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="flex-1 space-y-2">
-              <Input
-                placeholder="Task title"
-                value={formValues.title}
-                ref={titleInputRef}
-                onChange={(e) => setFormValues((prev) => ({ ...prev, title: e.target.value }))}
-              />
-              <textarea
-                className="min-h-18 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                placeholder="Description (optional)"
-                value={formValues.description}
-                onChange={(e) =>
-                  setFormValues((prev) => ({ ...prev, description: e.target.value }))
-                }
-              />
-            </div>
-            <div className="w-full space-y-2 sm:w-64">
-              <Input
-                type="date"
-                value={formValues.dueDate}
-                onChange={(e) => setFormValues((prev) => ({ ...prev, dueDate: e.target.value }))}
-              />
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={formValues.status}
-                onChange={(e) =>
-                  setFormValues((prev) => ({ ...prev, status: e.target.value as Task["status"] }))
-              }
-              >
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="done">Done</option>
-              </select>
-              <Button onClick={handleCreate} className="w-full">
-                Add Task
-              </Button>
-            </div>
-          </div>
-          {formError && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
-              {formError}
-            </div>
-          )}
-        </div>
+	return (
+		<Card className="w-full">
+			<CardHeader>
+				<CardTitle>Tasks</CardTitle>
+				<CardDescription>
+					Track tasks, mark complete, and clear them out.
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<div className="space-y-2 rounded-md border p-4">
+					<div className="flex flex-col gap-3 sm:flex-row">
+						<div className="flex-1 space-y-2">
+							<Input
+								placeholder="Task title"
+								value={formValues.title}
+								ref={titleInputRef}
+								onChange={(e) =>
+									setFormValues((prev) => ({ ...prev, title: e.target.value }))
+								}
+							/>
+							<textarea
+								className="min-h-18 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+								placeholder="Description (optional)"
+								value={formValues.description}
+								onChange={(e) =>
+									setFormValues((prev) => ({
+										...prev,
+										description: e.target.value,
+									}))
+								}
+							/>
+						</div>
+						<div className="w-full space-y-2 sm:w-64">
+							<Input
+								type="date"
+								value={formValues.dueDate}
+								onChange={(e) =>
+									setFormValues((prev) => ({
+										...prev,
+										dueDate: e.target.value,
+									}))
+								}
+							/>
+							<select
+								className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+								value={formValues.status}
+								onChange={(e) =>
+									setFormValues((prev) => ({
+										...prev,
+										status: e.target.value as Task["status"],
+									}))
+								}
+							>
+								<option value="todo">To do</option>
+								<option value="in_progress">In progress</option>
+								<option value="done">Done</option>
+							</select>
+							<Button onClick={handleCreate} className="w-full">
+								Add Task
+							</Button>
+						</div>
+					</div>
+					{formError && (
+						<div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
+							{formError}
+						</div>
+					)}
+				</div>
 
-        {isLoading && (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-md border p-3">
-                <Skeleton className="h-5 w-5 shrink-0 rounded" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-3 w-2/3" />
-                  <Skeleton className="h-3 w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+				{isLoading && (
+					<div className="space-y-3">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div
+								key={i}
+								className="flex items-start gap-3 rounded-md border p-3"
+							>
+								<Skeleton className="h-5 w-5 shrink-0 rounded" />
+								<div className="flex-1 space-y-2">
+									<Skeleton className="h-4 w-full" />
+									<Skeleton className="h-3 w-2/3" />
+									<Skeleton className="h-3 w-1/3" />
+								</div>
+							</div>
+						))}
+					</div>
+				)}
 
-        {isError && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm">
-            <div className="font-medium text-destructive">Failed to load tasks</div>
-            <p className="mt-1 text-destructive/70">
-              Something went wrong. Please refresh the page or try again later.
-            </p>
-          </div>
-        )}
+				{isError && (
+					<div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm">
+						<div className="font-medium text-destructive">
+							Failed to load tasks
+						</div>
+						<p className="mt-1 text-destructive/70">
+							Something went wrong. Please refresh the page or try again later.
+						</p>
+					</div>
+				)}
 
-        {!isLoading && !isError && sorted.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-8 text-center">
-            <CheckCircle2 className="mb-3 h-12 w-12 text-muted-foreground/40" />
-            <h3 className="font-semibold text-muted-foreground">Noch keine Aufgaben</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Lege deine erste Aufgabe an und halte Deadlines im Blick.
-            </p>
-            <Button className="mt-4" variant="default" onClick={focusNewTask}>
-              Erste Aufgabe anlegen
-            </Button>
-          </div>
-        )}
+				{!isLoading && !isError && sorted.length === 0 && (
+					<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-muted-foreground/20 bg-muted/30 p-8 text-center">
+						<CheckCircle2 className="mb-3 h-12 w-12 text-muted-foreground/40" />
+						<h3 className="font-semibold text-muted-foreground">
+							Noch keine Aufgaben
+						</h3>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Lege deine erste Aufgabe an und halte Deadlines im Blick.
+						</p>
+						<Button className="mt-4" variant="default" onClick={focusNewTask}>
+							Erste Aufgabe anlegen
+						</Button>
+					</div>
+				)}
 
-        {!isLoading && !isError && sorted.length > 0 && (
-          <div className="divide-y rounded-md border">
-            {sorted.map((task) => {
-              const isDone = task.status === "done";
-              const isExpanded = expandedTasks.has(task._id);
-              const hasDetails = !!task.description;
-              return (
-                <div
-                  key={task._id}
-                  className="hover:bg-muted/50"
-                >
-                  {editingId === task._id ? (
-                    <div className="p-3">
-                      <div className="space-y-2 rounded-md border bg-muted/20 p-3">
-                        <Input
-                          value={editValues.title}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, title: e.target.value }))
-                          }
-                        />
-                        <textarea
-                          className="min-h-18 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          value={editValues.description}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, description: e.target.value }))
-                          }
-                        />
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                          <Input
-                            type="date"
-                            value={editValues.dueDate}
-                            onChange={(e) =>
-                              setEditValues((prev) => ({ ...prev, dueDate: e.target.value }))
-                            }
-                          />
-                          <select
-                            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            value={editValues.status}
-                            onChange={(e) =>
-                              setEditValues((prev) => ({
-                                ...prev,
-                                status: e.target.value as Task["status"],
-                              }))
-                            }
-                          >
-                            <option value="todo">To do</option>
-                            <option value="in_progress">In progress</option>
-                            <option value="done">Done</option>
-                          </select>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              className="w-full"
-                              onClick={async () => {
-                                setEditError(null);
+				{!isLoading && !isError && sorted.length > 0 && (
+					<div className="divide-y rounded-md border">
+						{sorted.map((task) => {
+							const isDone = task.status === "done";
+							const isExpanded = expandedTasks.has(task._id);
+							const hasDetails = !!task.description;
+							return (
+								<div key={task._id} className="hover:bg-muted/50">
+									{editingId === task._id ? (
+										<div className="p-3">
+											<div className="space-y-2 rounded-md border bg-muted/20 p-3">
+												<Input
+													value={editValues.title}
+													onChange={(e) =>
+														setEditValues((prev) => ({
+															...prev,
+															title: e.target.value,
+														}))
+													}
+												/>
+												<textarea
+													className="min-h-18 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+													value={editValues.description}
+													onChange={(e) =>
+														setEditValues((prev) => ({
+															...prev,
+															description: e.target.value,
+														}))
+													}
+												/>
+												<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+													<Input
+														type="date"
+														value={editValues.dueDate}
+														onChange={(e) =>
+															setEditValues((prev) => ({
+																...prev,
+																dueDate: e.target.value,
+															}))
+														}
+													/>
+													<select
+														className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+														value={editValues.status}
+														onChange={(e) =>
+															setEditValues((prev) => ({
+																...prev,
+																status: e.target.value as Task["status"],
+															}))
+														}
+													>
+														<option value="todo">To do</option>
+														<option value="in_progress">In progress</option>
+														<option value="done">Done</option>
+													</select>
+													<div className="flex gap-2">
+														<Button
+															size="sm"
+															className="w-full"
+															onClick={async () => {
+																setEditError(null);
 
-                                if (!editValues.title.trim()) {
-                                  setEditError("Title is required.");
-                                  return;
-                                }
+																if (!editValues.title.trim()) {
+																	setEditError("Title is required.");
+																	return;
+																}
 
-                                if (!editValues.dueDate) {
-                                  setEditError("Due date is required.");
-                                  return;
-                                }
+																if (!editValues.dueDate) {
+																	setEditError("Due date is required.");
+																	return;
+																}
 
-                                try {
-                                  await updateTask({
-                                    taskId: task._id,
-                                    title: editValues.title.trim(),
-                                    description: editValues.description.trim() || undefined,
-                                    dueDate: toISODate(editValues.dueDate),
-                                    status: editValues.status,
-                                  });
-                                  setEditingId(null);
-                                  void refetch();
-                                  toast.success("Aufgabe aktualisiert", {
-                                    description: `„${editValues.title.trim()}" wurde erfolgreich gespeichert.`,
-                                  });
-                                } catch (err) {
-                                  const message = getUserFriendlyMessage(err);
-                                  logError(err, "TaskList.handleSaveEdit");
-                                  setEditError(message);
-                                  toast.error("Fehler beim Speichern", {
-                                    description: message || "Die Änderungen konnten nicht gespeichert werden. Bitte versuche es erneut.",
-                                  });
-                                }
-                              }}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="w-full"
-                              onClick={() => setEditingId(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                        {editError && (
-                          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
-                            {editError}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    ) : (
-                      <div className="flex items-start gap-3 p-3">
-                        <Checkbox
-                          checked={isDone}
-                          onCheckedChange={() => handleToggleComplete(task)}
-                          aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className={`font-medium wrap-break-word ${
-                                isDone ? "line-through text-muted-foreground" : ""
-                              }`}>
-                                {task.title}
-                              </div>
-                            </div>
-                            <div className="flex gap-1 shrink-0">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                aria-label="Configure reminder"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedReminderId(expandedReminderId === task._id ? null : task._id);
-                                }}
-                              >
-                                <Bell className={`h-4 w-4 ${task.reminderEnabled ? "fill-current text-blue-600" : ""}`} />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                aria-label="Edit task"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingId(task._id);
-                                  setEditError(null);
-                                  setEditValues({
-                                    title: task.title,
-                                    description: task.description ?? "",
-                                    dueDate: toDateInputValue(task.dueDate),
-                                    status: task.status,
-                                  });
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                aria-label="Delete task"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(task._id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          {/* Always visible: Status, Due Date, Countdown */}
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
-                              <CheckCircle2 className="h-3 w-3" /> {statusLabel[task.status]}
-                            </span>
-                            <Separator orientation="vertical" className="h-4" />
-                            <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                            {task.status !== "done" && (() => {
-                              const { label, colorClass } = getCountdownInfo(task.dueDate);
-                              return (
-                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${colorClass}`}>
-                                  {label}
-                                </span>
-                              );
-                            })()}
-                          </div>
+																try {
+																	await updateTask({
+																		taskId: task._id,
+																		title: editValues.title.trim(),
+																		description:
+																			editValues.description.trim() ||
+																			undefined,
+																		dueDate: toISODate(editValues.dueDate),
+																		status: editValues.status,
+																	});
+																	setEditingId(null);
+																	void refetch();
+																	toast.success("Aufgabe aktualisiert", {
+																		description: `„${editValues.title.trim()}" wurde erfolgreich gespeichert.`,
+																	});
+																} catch (err) {
+																	const message = getUserFriendlyMessage(err);
+																	logError(err, "TaskList.handleSaveEdit");
+																	setEditError(message);
+																	toast.error("Fehler beim Speichern", {
+																		description:
+																			message ||
+																			"Die Änderungen konnten nicht gespeichert werden. Bitte versuche es erneut.",
+																	});
+																}
+															}}
+														>
+															Save
+														</Button>
+														<Button
+															size="sm"
+															variant="outline"
+															className="w-full"
+															onClick={() => setEditingId(null)}
+														>
+															Cancel
+														</Button>
+													</div>
+												</div>
+												{editError && (
+													<div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
+														{editError}
+													</div>
+												)}
+											</div>
+										</div>
+									) : (
+										<div className="flex items-start gap-3 p-3">
+											<Checkbox
+												checked={isDone}
+												onCheckedChange={() => handleToggleComplete(task)}
+												aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
+												className="mt-1"
+											/>
+											<div className="flex-1 min-w-0 space-y-2">
+												<div className="flex items-start justify-between gap-3">
+													<div className="flex-1 min-w-0">
+														<div
+															className={`font-medium wrap-break-word ${
+																isDone
+																	? "line-through text-muted-foreground"
+																	: ""
+															}`}
+														>
+															{task.title}
+														</div>
+													</div>
+													<div className="flex gap-1 shrink-0">
+														<Button
+															size="icon"
+															variant="ghost"
+															aria-label="Configure reminder"
+															onClick={(e) => {
+																e.stopPropagation();
+																setExpandedReminderId(
+																	expandedReminderId === task._id
+																		? null
+																		: task._id,
+																);
+															}}
+														>
+															<Bell
+																className={`h-4 w-4 ${task.reminderEnabled ? "fill-current text-blue-600" : ""}`}
+															/>
+														</Button>
+														<Button
+															size="icon"
+															variant="ghost"
+															aria-label="Edit task"
+															onClick={(e) => {
+																e.stopPropagation();
+																setEditingId(task._id);
+																setEditError(null);
+																setEditValues({
+																	title: task.title,
+																	description: task.description ?? "",
+																	dueDate: toDateInputValue(task.dueDate),
+																	status: task.status,
+																});
+															}}
+														>
+															<Pencil className="h-4 w-4" />
+														</Button>
+														<Button
+															size="icon"
+															variant="ghost"
+															aria-label="Delete task"
+															onClick={(e) => {
+																e.stopPropagation();
+																handleDelete(task._id);
+															}}
+														>
+															<Trash2 className="h-4 w-4" />
+														</Button>
+													</div>
+												</div>
 
-                          {/* Description: Collapsible if exists */}
-                          {hasDetails && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newSet = new Set(expandedTasks);
-                                if (isExpanded) {
-                                  newSet.delete(task._id);
-                                } else {
-                                  newSet.add(task._id);
-                                }
-                                setExpandedTasks(newSet);
-                              }}
-                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              <span>{isExpanded ? "Beschreibung ausblenden" : "Beschreibung anzeigen"}</span>
-                              <ChevronDown
-                                className={`h-3 w-3 transition-transform ${
-                                  isExpanded ? "rotate-180" : ""
-                                }`}
-                              />
-                            </button>
-                          )}
-                          {isExpanded && task.description && (
-                            <div className="text-sm text-muted-foreground pt-1 border-t">
-                              {task.description}
-                            </div>
-                          )}
-                          {expandedReminderId === task._id && (
-                            <div className="mt-3 space-y-3 rounded-md border bg-muted/20 p-3">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  id={`reminder-${String(task._id)}`}
-                                  type="checkbox"
-                                  checked={task.reminderEnabled ?? false}
-                                  onChange={async (e) => {
-                                    await updateTaskReminder({
-                                      taskId: task._id,
-                                      reminderEnabled: e.target.checked,
-                                    });
-                                    void refetch();
-                                  }}
-                                  className="h-4 w-4 rounded border-gray-300"
-                                />
-                                <label htmlFor={`reminder-${String(task._id)}`} className="text-sm font-medium">Enable reminder</label>
-                              </div>
-                              {task.reminderEnabled && (
-                                <div className="space-y-2">
-                                  <label htmlFor={`reminder-minutes-${String(task._id)}`} className="text-xs font-medium">Notify me:</label>
-                                  <select
-                                    id={`reminder-minutes-${String(task._id)}`}
-                                    className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
-                                    value={reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440}
-                                    onChange={(e) => {
-                                      const minutes = parseInt(e.target.value, 10);
-                                      setReminderMinutes((prev) => ({ ...prev, [String(task._id)]: minutes }));
-                                    }}
-                                  >
-                                    <option value="60">1 hour before</option>
-                                    <option value="360">6 hours before</option>
-                                    <option value="1440">1 day before</option>
-                                    <option value="2880">2 days before</option>
-                                  </select>
-                                  <Button
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={async () => {
-                                      const minutes = reminderMinutes[String(task._id)] ?? task.reminderMinutesBefore ?? 1440;
-                                      await updateTaskReminder({
-                                        taskId: task._id,
-                                        reminderMinutesBefore: minutes,
-                                      });
-                                      void refetch();
-                                      setExpandedReminderId(null);
-                                    }}
-                                  >
-                                    Save
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+												{/* Always visible: Status, Due Date, Countdown */}
+												<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+													<span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
+														<CheckCircle2 className="h-3 w-3" />{" "}
+														{statusLabel[task.status]}
+													</span>
+													<Separator orientation="vertical" className="h-4" />
+													<span>
+														Due {new Date(task.dueDate).toLocaleDateString()}
+													</span>
+													{task.status !== "done" &&
+														(() => {
+															const { label, colorClass } = getCountdownInfo(
+																task.dueDate,
+															);
+															return (
+																<span
+																	className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${colorClass}`}
+																>
+																	{label}
+																</span>
+															);
+														})()}
+												</div>
+
+												{/* Description: Collapsible if exists */}
+												{hasDetails && (
+													<button
+														type="button"
+														onClick={() => {
+															const newSet = new Set(expandedTasks);
+															if (isExpanded) {
+																newSet.delete(task._id);
+															} else {
+																newSet.add(task._id);
+															}
+															setExpandedTasks(newSet);
+														}}
+														className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+													>
+														<span>
+															{isExpanded
+																? "Beschreibung ausblenden"
+																: "Beschreibung anzeigen"}
+														</span>
+														<ChevronDown
+															className={`h-3 w-3 transition-transform ${
+																isExpanded ? "rotate-180" : ""
+															}`}
+														/>
+													</button>
+												)}
+												{isExpanded && task.description && (
+													<div className="text-sm text-muted-foreground pt-1 border-t">
+														{task.description}
+													</div>
+												)}
+												{expandedReminderId === task._id && (
+													<div className="mt-3 space-y-3 rounded-md border bg-muted/20 p-3">
+														<div className="flex items-center gap-2">
+															<input
+																id={`reminder-${String(task._id)}`}
+																type="checkbox"
+																checked={task.reminderEnabled ?? false}
+																onChange={async (e) => {
+																	await updateTaskReminder({
+																		taskId: task._id,
+																		reminderEnabled: e.target.checked,
+																	});
+																	void refetch();
+																}}
+																className="h-4 w-4 rounded border-gray-300"
+															/>
+															<label
+																htmlFor={`reminder-${String(task._id)}`}
+																className="text-sm font-medium"
+															>
+																Enable reminder
+															</label>
+														</div>
+														{task.reminderEnabled && (
+															<div className="space-y-2">
+																<label
+																	htmlFor={`reminder-minutes-${String(task._id)}`}
+																	className="text-xs font-medium"
+																>
+																	Notify me:
+																</label>
+																<select
+																	id={`reminder-minutes-${String(task._id)}`}
+																	className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
+																	value={
+																		reminderMinutes[String(task._id)] ??
+																		task.reminderMinutesBefore ??
+																		1440
+																	}
+																	onChange={(e) => {
+																		const minutes = parseInt(
+																			e.target.value,
+																			10,
+																		);
+																		setReminderMinutes((prev) => ({
+																			...prev,
+																			[String(task._id)]: minutes,
+																		}));
+																	}}
+																>
+																	<option value="60">1 hour before</option>
+																	<option value="360">6 hours before</option>
+																	<option value="1440">1 day before</option>
+																	<option value="2880">2 days before</option>
+																</select>
+																<Button
+																	size="sm"
+																	className="w-full"
+																	onClick={async () => {
+																		const minutes =
+																			reminderMinutes[String(task._id)] ??
+																			task.reminderMinutesBefore ??
+																			1440;
+																		await updateTaskReminder({
+																			taskId: task._id,
+																			reminderMinutesBefore: minutes,
+																		});
+																		void refetch();
+																		setExpandedReminderId(null);
+																	}}
+																>
+																	Save
+																</Button>
+															</div>
+														)}
+													</div>
+												)}
+											</div>
+										</div>
+									)}
+								</div>
+							);
+						})}
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
 }

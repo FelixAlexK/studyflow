@@ -7,10 +7,7 @@ import {
 	useAccessToken,
 	useAuth,
 } from "@workos/authkit-tanstack-react-start/client";
-import {
-	ConvexProviderWithAuth,
-	ConvexReactClient,
-} from "convex/react";
+import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { useCallback, useMemo } from "react";
 import { routeTree } from "./routeTree.gen";
 

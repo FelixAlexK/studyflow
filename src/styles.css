@@ -121,3 +121,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* First Success Toast Animation */
+@keyframes success-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes success-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.first-success-toast {
+  animation: success-slide-in 0.4s ease-out, success-bounce 0.6s ease-in-out 0.4s;
+  border-left: 4px solid #22c55e;
+}
+
+.first-success-toast [data-title] {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.first-success-toast [data-description] {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
