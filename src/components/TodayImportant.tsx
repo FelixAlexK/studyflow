@@ -1,10 +1,12 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "../../convex/_generated/api";
-import type { Doc } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
 
 const MAX_ITEMS = 5;
 
@@ -33,6 +35,10 @@ interface TodayImportantProps {
 }
 
 export default function TodayImportant({ userId }: TodayImportantProps) {
+  const [expandedExams, setExpandedExams] = useState<Set<Id<"exams">>>(new Set());
+  const [expandedTasks, setExpandedTasks] = useState<Set<Id<"tasks">>>(new Set());
+  const [expandedEvents, setExpandedEvents] = useState<Set<Id<"events">>>(new Set());
+
   const { data: events = [] } = useSuspenseQuery(
     convexQuery(api.events.listEvents, { userId }),
   );
@@ -73,17 +79,50 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
             </div>
           ) : (
             <ul className="space-y-2">
-              {todayExams.map((exam) => (
-                <li key={String(exam._id)} className="rounded-md border px-3 py-2 text-sm bg-white/60">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold leading-tight">{exam.subject}</span>
-                    <span className="text-xs text-muted-foreground">{formatTime(exam.dateTime)}</span>
-                  </div>
-                  {exam.location && (
-                    <p className="text-xs text-muted-foreground mt-1">Ort: {exam.location}</p>
-                  )}
-                </li>
-              ))}
+              {todayExams.map((exam) => {
+                const isExpanded = expandedExams.has(exam._id);
+                const hasDetails = !!exam.location;
+                return (
+                  <li key={String(exam._id)} className="rounded-md border bg-white/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasDetails) return;
+                        const newSet = new Set(expandedExams);
+                        if (isExpanded) {
+                          newSet.delete(exam._id);
+                        } else {
+                          newSet.add(exam._id);
+                        }
+                        setExpandedExams(newSet);
+                      }}
+                      className={`w-full px-3 py-2 text-left ${
+                        hasDetails ? "hover:bg-muted/20 transition-colors" : ""
+                      }`}
+                      disabled={!hasDetails}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold leading-tight text-sm">{exam.subject}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{formatTime(exam.dateTime)}</span>
+                          {hasDetails && (
+                            <ChevronDown
+                              className={`h-4 w-4 text-muted-foreground transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    {isExpanded && exam.location && (
+                      <div className="px-3 pb-2 text-xs text-muted-foreground border-t pt-2 mt-1">
+                        <p>Ort: {exam.location}</p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -102,17 +141,50 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
             </div>
           ) : (
             <ul className="space-y-2">
-              {todayTasks.map((task) => (
-                <li key={String(task._id)} className="rounded-md border px-3 py-2 text-sm bg-white/60">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold leading-tight">{task.title}</span>
-                    <span className="text-xs text-muted-foreground">Heute</span>
-                  </div>
-                  {task.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                  )}
-                </li>
-              ))}
+              {todayTasks.map((task) => {
+                const isExpanded = expandedTasks.has(task._id);
+                const hasDetails = !!task.description;
+                return (
+                  <li key={String(task._id)} className="rounded-md border bg-white/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasDetails) return;
+                        const newSet = new Set(expandedTasks);
+                        if (isExpanded) {
+                          newSet.delete(task._id);
+                        } else {
+                          newSet.add(task._id);
+                        }
+                        setExpandedTasks(newSet);
+                      }}
+                      className={`w-full px-3 py-2 text-left ${
+                        hasDetails ? "hover:bg-muted/20 transition-colors" : ""
+                      }`}
+                      disabled={!hasDetails}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold leading-tight text-sm">{task.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Heute</span>
+                          {hasDetails && (
+                            <ChevronDown
+                              className={`h-4 w-4 text-muted-foreground transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    {isExpanded && task.description && (
+                      <div className="px-3 pb-2 text-xs text-muted-foreground border-t pt-2 mt-1">
+                        <p>{task.description}</p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -131,17 +203,50 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
             </div>
           ) : (
             <ul className="space-y-2">
-              {todayEvents.map((event) => (
-                <li key={String(event._id)} className="rounded-md border px-3 py-2 text-sm bg-white/60">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold leading-tight">{event.title}</span>
-                    <span className="text-xs text-muted-foreground">{event.allDay ? "Ganztägig" : formatTime(event.startDate)}</span>
-                  </div>
-                  {event.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
-                  )}
-                </li>
-              ))}
+              {todayEvents.map((event) => {
+                const isExpanded = expandedEvents.has(event._id);
+                const hasDetails = !!event.description;
+                return (
+                  <li key={String(event._id)} className="rounded-md border bg-white/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasDetails) return;
+                        const newSet = new Set(expandedEvents);
+                        if (isExpanded) {
+                          newSet.delete(event._id);
+                        } else {
+                          newSet.add(event._id);
+                        }
+                        setExpandedEvents(newSet);
+                      }}
+                      className={`w-full px-3 py-2 text-left ${
+                        hasDetails ? "hover:bg-muted/20 transition-colors" : ""
+                      }`}
+                      disabled={!hasDetails}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold leading-tight text-sm">{event.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{event.allDay ? "Ganztägig" : formatTime(event.startDate)}</span>
+                          {hasDetails && (
+                            <ChevronDown
+                              className={`h-4 w-4 text-muted-foreground transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    {isExpanded && event.description && (
+                      <div className="px-3 pb-2 text-xs text-muted-foreground border-t pt-2 mt-1">
+                        <p>{event.description}</p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
