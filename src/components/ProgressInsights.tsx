@@ -67,7 +67,7 @@ export default function ProgressInsights() {
 	} satisfies ChartConfig;
 
 	return (
-		<Card className="col-span-full">
+		<Card id="progress-insights" className="col-span-full">
 			<CardHeader>
 					<div className="flex items-start justify-between">
 						<div>

@@ -88,7 +88,7 @@ export default function TodayImportant({ userId }: TodayImportantProps) {
 		.slice(0, MAX_ITEMS);
 
 	return (
-		<Card>
+		<Card id="today-important">
 			<CardHeader>
 				<CardTitle>Was ist heute wichtig?</CardTitle>
 			</CardHeader>

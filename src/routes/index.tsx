@@ -4,6 +4,7 @@ import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
 import CompactCalendar from "@/components/CompactCalendar";
+import HelpfulTips from "@/components/HelpfulTips";
 import HeroStats from "@/components/HeroStats";
 import LearningCheckIns from "@/components/LearningCheckIns";
 import LearningProgress from "@/components/LearningProgress";
@@ -59,6 +60,7 @@ function DashboardPage() {
 
 				{user?.id ? <HeroStats /> : null}
 				{user?.id ? <QuickActionButtons /> : null}
+				{user?.id ? <HelpfulTips /> : null}
 				<div className="grid gap-6 md:grid-cols-3">
 					{user?.id ? (
 						<div className="md:col-span-2">
