@@ -41,9 +41,14 @@ const getReminderLabel = (minutes: number): string => {
 	return `${hours}h ${mins}min`;
 };
 
-export default function QuickCreateModal() {
-	const [isOpen, setIsOpen] = useState(false);
-	const [createType, setCreateType] = useState<CreateType>(null);
+interface QuickCreateModalProps {
+	initialType?: "task" | "exam" | "event" | null;
+	onClose?: () => void;
+}
+
+export default function QuickCreateModal({ initialType = null, onClose }: QuickCreateModalProps = {}) {
+	const [isOpen, setIsOpen] = useState(initialType ? true : false);
+	const [createType, setCreateType] = useState<CreateType>(initialType || null);
 	const [showDetails, setShowDetails] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +88,7 @@ export default function QuickCreateModal() {
 		setIsOpen(false);
 		setCreateType(null);
 		resetForm();
+		onClose?.();
 	};
 
 	const handleSelectType = (type: CreateType) => {
