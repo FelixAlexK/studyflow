@@ -9,6 +9,7 @@ import HeroStats from "@/components/HeroStats";
 import LearningCheckIns from "@/components/LearningCheckIns";
 import LearningProgress from "@/components/LearningProgress";
 import { OnboardingFlow, useOnboarding } from "@/components/OnboardingFlow";
+import OnboardingHint from "@/components/OnboardingHint";
 import PriorityTasks from "@/components/PriorityTasks";
 import ProductivityOverview from "@/components/ProductivityOverview";
 import ProgressInsights from "@/components/ProgressInsights";
@@ -58,6 +59,7 @@ function DashboardPage() {
 					</p>
 				</div>
 
+				{user?.id ? <OnboardingHint /> : null}
 				{user?.id ? <HeroStats /> : null}
 				{user?.id ? <QuickActionButtons /> : null}
 				{user?.id ? <HelpfulTips /> : null}
