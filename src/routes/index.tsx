@@ -27,6 +27,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import WeekOverview from "@/components/WeekOverview";
+import { useDashboardLayout } from "@/hooks/use-dashboard-layout";
 import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/")({
@@ -45,6 +46,26 @@ function DashboardPage() {
 	const { data: numbers } = useQuery(
 		convexQuery(api.myFunctions.listNumbers, { count: 10 }),
 	);
+
+	// Prepare default orders for sections (dependent on user presence)
+	const defaults = {
+		primary: [...(user?.id ? ["priority" as const] : []), "timer" as const],
+		daily: [
+			"calendar" as const,
+			"todayImportant" as const,
+			"todayAtUni" as const,
+			"stressOverview" as const,
+			"weekOverview" as const,
+		],
+		learning: [
+			"learningProgress" as const,
+			"learningCheckIns" as const,
+			"progressInsights" as const,
+		],
+	};
+
+	const { primaryOrder, setPrimaryOrder, dailyOrder, setDailyOrder, learningOrder, setLearningOrder } =
+		useDashboardLayout(user?.id, defaults);
 
 	return (
 		<AppLayout headerTitle={`Welcome, ${user?.firstName || "User"}`}>
@@ -65,9 +86,10 @@ function DashboardPage() {
 				{user?.id ? <QuickActionButtons /> : null}
 				{user?.id ? <HelpfulTips /> : null}
 				<DraggableGrid
-					items={[...(user?.id ? ["priority" as const] : []), "timer" as const]}
+					items={primaryOrder}
 					className="grid gap-6 md:grid-cols-3"
 					getItemClassName={(id) => (id === "priority" ? "md:col-span-2" : undefined)}
+					onOrderChange={setPrimaryOrder}
 					renderItem={(id) => {
 						switch (id) {
 							case "priority":
@@ -80,13 +102,7 @@ function DashboardPage() {
 				/>
 				{user?.id ? (
 					<DraggableGrid
-						items={[
-							"calendar" as const,
-							"todayImportant" as const,
-							"todayAtUni" as const,
-							"stressOverview" as const,
-							"weekOverview" as const,
-						]}
+						items={dailyOrder}
 						className="grid gap-6 md:grid-cols-3"
 						getItemClassName={(id) =>
 							id === "calendar"
@@ -95,6 +111,7 @@ function DashboardPage() {
 								  ? "md:col-span-3"
 								  : undefined
 						}
+						onOrderChange={setDailyOrder}
 						renderItem={(id) => {
 							switch (id) {
 								case "calendar":
@@ -115,12 +132,9 @@ function DashboardPage() {
 				) : null}
 				{user?.id ? (
 					<DraggableGrid
-						items={[
-							"learningProgress" as const,
-							"learningCheckIns" as const,
-							"progressInsights" as const,
-						]}
+						items={learningOrder}
 						className="grid gap-6 md:grid-cols-3"
+						onOrderChange={setLearningOrder}
 						renderItem={(id) => {
 							switch (id) {
 								case "learningProgress":

@@ -1,7 +1,7 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
-  DndContext,
   closestCenter,
+  DndContext,
   MouseSensor,
   TouchSensor,
   useSensor,
@@ -21,6 +21,7 @@ type DraggableGridProps<T extends string> = {
   renderItem: (id: T) => React.ReactNode;
   className?: string;
   getItemClassName?: (id: T) => string | undefined;
+  onOrderChange?: (next: T[]) => void;
 };
 
 export function DraggableGrid<T extends string>({
@@ -28,6 +29,7 @@ export function DraggableGrid<T extends string>({
   renderItem,
   className,
   getItemClassName,
+  onOrderChange,
 }: DraggableGridProps<T>) {
   const [order, setOrder] = React.useState<T[]>(items);
 
@@ -42,7 +44,11 @@ export function DraggableGrid<T extends string>({
     if (!over || active.id === over.id) return;
     const oldIndex = order.indexOf(active.id as T);
     const newIndex = order.indexOf(over.id as T);
-    setOrder((prev) => arrayMove(prev, oldIndex, newIndex));
+    setOrder((prev) => {
+      const next = arrayMove(prev, oldIndex, newIndex);
+      onOrderChange?.(next);
+      return next;
+    });
   }
 
   return (
