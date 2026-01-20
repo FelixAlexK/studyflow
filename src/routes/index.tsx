@@ -1,6 +1,7 @@
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
-import AddWidgetButton from "@/components/AddWidgetButton";
+import { LayoutGrid } from "lucide-react";
+import React from "react";
 import AppLayout from "@/components/AppLayout";
 import CompactCalendar from "@/components/CompactCalendar";
 import DraggableGrid from "@/components/DraggableGrid";
@@ -19,7 +20,9 @@ import RemovableWidget from "@/components/RemovableWidget";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
 import TodayImportant from "@/components/TodayImportant";
+import { Button } from "@/components/ui/button";
 import WeekOverview from "@/components/WeekOverview";
+import WidgetSelectionPanel from "@/components/WidgetSelectionPanel";
 import { useDashboardLayout } from "@/hooks/use-dashboard-layout";
 
 export const Route = createFileRoute("/")({
@@ -34,6 +37,7 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
 	const { user } = useLoaderData({ from: "/" });
 	const { shouldShowOnboarding, markAsComplete } = useOnboarding();
+	const [widgetPanelOpen, setWidgetPanelOpen] = React.useState(false);
 
 	// Prepare default orders for sections (dependent on user presence)
 	const defaults = {
@@ -74,28 +78,28 @@ function DashboardPage() {
 			{shouldShowOnboarding && <OnboardingFlow onComplete={markAsComplete} />}
 
 			<div className="space-y-6">
-				<div>
-					<h2 className="text-2xl font-bold tracking-tight">
-						Welcome, {user?.firstName || "User"}
-					</h2>
-					<p className="text-muted-foreground">
-						Track your productivity and manage your tasks here.
-					</p>
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-2xl font-bold tracking-tight">
+							Welcome, {user?.firstName || "User"}
+						</h2>
+						<p className="text-muted-foreground">
+							Track your productivity and manage your tasks here.
+						</p>
+					</div>
+					<Button
+						onClick={() => setWidgetPanelOpen(true)}
+						variant="outline"
+						size="default"
+						className="gap-2"
+					>
+						<LayoutGrid className="h-4 w-4" />
+						Widget Library
+					</Button>
 				</div>
 
 				{user?.id ? <OnboardingHint /> : null}
-				<div className="flex items-center justify-between">
-					<h3 className="text-lg font-semibold">Focus & Tasks</h3>
-					<AddWidgetButton
-						sectionLabel="Focus & Tasks"
-						existingIds={primaryOrder}
-						options={[
-							{ id: "quickActions" as const, title: "Quick Actions", description: "Shortcut buttons for common tasks" },
-							{ id: "helpfulTips" as const, title: "Helpful Tips", description: "Contextual productivity tips" },
-						]}
-						onAdd={(id) => addPrimary(id)}
-					/>
-				</div>
+				<h3 className="text-lg font-semibold">Focus & Tasks</h3>
 				<DraggableGrid
 					items={primaryOrder}
 					className="grid gap-6 md:grid-cols-3"
@@ -125,21 +129,7 @@ function DashboardPage() {
 				/>
 				{user?.id ? (
 					<>
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold">Daily Overview</h3>
-							<AddWidgetButton
-								sectionLabel="Daily Overview"
-								existingIds={dailyOrder}
-								options={[
-									{ id: "calendar" as const, title: "Calendar Preview" },
-									{ id: "todayImportant" as const, title: "Today Important" },
-									{ id: "todayAtUni" as const, title: "Today at Uni" },
-									{ id: "stressOverview" as const, title: "Stress Overview" },
-									{ id: "weekOverview" as const, title: "Week Overview" },
-								]}
-								onAdd={(id) => addDaily(id)}
-							/>
-						</div>
+						<h3 className="text-lg font-semibold">Daily Overview</h3>
 						<DraggableGrid
 							items={dailyOrder}
 							className="grid gap-6 md:grid-cols-3"
@@ -179,21 +169,7 @@ function DashboardPage() {
 				) : null}
 				{user?.id ? (
 					<>
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold">Learning & Insights</h3>
-							<AddWidgetButton
-								sectionLabel="Learning & Insights"
-								existingIds={learningOrder}
-								options={[
-									{ id: "learningProgress" as const, title: "Learning Progress" },
-									{ id: "learningCheckIns" as const, title: "Learning Check-Ins" },
-									{ id: "progressInsights" as const, title: "Progress Insights" },
-									{ id: "heroStats" as const, title: "Stats Card" },
-									{ id: "productivityOverview" as const, title: "Productivity Overview" },
-								]}
-								onAdd={(id) => addLearning(id)}
-							/>
-						</div>
+						<h3 className="text-lg font-semibold">Learning & Insights</h3>
 						<DraggableGrid
 							items={learningOrder}
 							className="grid gap-6 md:grid-cols-3"
@@ -230,6 +206,18 @@ function DashboardPage() {
 
 				
 			</div>
+
+			<WidgetSelectionPanel
+				open={widgetPanelOpen}
+				onOpenChange={setWidgetPanelOpen}
+				enabledPrimary={primaryOrder}
+				enabledDaily={dailyOrder}
+				enabledLearning={learningOrder}
+				onAddPrimary={addPrimary}
+				onAddDaily={addDaily}
+				onAddLearning={addLearning}
+				hasUser={!!user?.id}
+			/>
 		</AppLayout>
 	);
 }
