@@ -33,9 +33,18 @@ export function DraggableGrid<T extends string>({
 }: DraggableGridProps<T>) {
   const [order, setOrder] = React.useState<T[]>(items);
 
+  const arraysEqual = React.useCallback((a: T[], b: T[]) => {
+    if (a === b) return true;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }, []);
+
   React.useEffect(() => {
-    setOrder(items);
-  }, [items]);
+    setOrder((prev) => (arraysEqual(prev, items) ? prev : items));
+  }, [items, arraysEqual]);
 
   const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
 
