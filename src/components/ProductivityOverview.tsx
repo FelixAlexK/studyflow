@@ -1,6 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, BookOpen, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -30,6 +31,17 @@ export default function ProductivityOverview() {
 		isLoading: minutesLoading,
 		isError: minutesError,
 	} = useQuery(convexQuery(api.stats.getTotalFocusMinutes, {}));
+
+	const allZero =
+		!tasksLoading &&
+		!sessionsLoading &&
+		!minutesLoading &&
+		!tasksError &&
+		!sessionsError &&
+		!minutesError &&
+		completedTasks === 0 &&
+		focusSessions === 0 &&
+		totalFocusMinutes === 0;
 
 	if (tasksError || sessionsError || minutesError) {
 		logError(
@@ -71,6 +83,38 @@ export default function ProductivityOverview() {
 			</CardContent>
 		</Card>
 	);
+
+	if (allZero) {
+		return (
+			<Card className="col-span-full border-dashed border-muted-foreground/40 bg-muted/20">
+				<CardHeader>
+					<div className="flex items-center gap-3">
+						<CheckCircle2 className="h-5 w-5 text-primary" />
+						<CardTitle className="text-base">Kein Verlauf vorhanden</CardTitle>
+					</div>
+					<CardDescription>
+						Du hast noch keine abgeschlossenen Tasks oder Fokus-Sessions. Starte eine Session oder lege deine erste Aufgabe an.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex items-center gap-2 text-sm text-muted-foreground">
+						<span role="img" aria-label="sparkles">
+							✨
+						</span>
+						<span>Deine Übersicht füllt sich, sobald du loslegst.</span>
+					</div>
+					<div className="flex gap-2">
+						<Button asChild variant="secondary" size="sm">
+							<a href="/pomodoro">Focus starten</a>
+						</Button>
+						<Button asChild variant="outline" size="sm">
+							<a href="/tasks">Aufgabe anlegen</a>
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
+		);
+	}
 
 	return (
 		<div className="grid gap-4 md:grid-cols-3">
