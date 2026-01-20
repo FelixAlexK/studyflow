@@ -4,6 +4,7 @@ import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
 import AppLayout from "@/components/AppLayout";
 import CompactCalendar from "@/components/CompactCalendar";
+import DraggableGrid from "@/components/DraggableGrid";
 import HelpfulTips from "@/components/HelpfulTips";
 import HeroStats from "@/components/HeroStats";
 import LearningCheckIns from "@/components/LearningCheckIns";
@@ -63,22 +64,77 @@ function DashboardPage() {
 				{user?.id ? <HeroStats /> : null}
 				{user?.id ? <QuickActionButtons /> : null}
 				{user?.id ? <HelpfulTips /> : null}
-				<div className="grid gap-6 md:grid-cols-3">
-					{user?.id ? (
-						<div className="md:col-span-2">
-							<PriorityTasks />
-						</div>
-					) : null}
-					<QuickFocusTimer />
-				</div>
-				{user?.id ? <CompactCalendar userId={user.id} /> : null}
-				{user?.id ? <TodayImportant userId={user.id} /> : null}
-				{user?.id ? <TodayAtUni userId={user.id} /> : null}
-				{user?.id ? <StressOverview /> : null}
-				{user?.id ? <WeekOverview userId={user.id} /> : null}
-				{user?.id ? <LearningProgress /> : null}
-				{user?.id ? <LearningCheckIns /> : null}
-				{user?.id ? <ProgressInsights /> : null}
+				<DraggableGrid
+					items={[...(user?.id ? ["priority" as const] : []), "timer" as const]}
+					className="grid gap-6 md:grid-cols-3"
+					getItemClassName={(id) => (id === "priority" ? "md:col-span-2" : undefined)}
+					renderItem={(id) => {
+						switch (id) {
+							case "priority":
+								return <PriorityTasks />;
+							case "timer":
+							default:
+								return <QuickFocusTimer />;
+						}
+					}}
+				/>
+				{user?.id ? (
+					<DraggableGrid
+						items={[
+							"calendar" as const,
+							"todayImportant" as const,
+							"todayAtUni" as const,
+							"stressOverview" as const,
+							"weekOverview" as const,
+						]}
+						className="grid gap-6 md:grid-cols-3"
+						getItemClassName={(id) =>
+							id === "calendar"
+								? "md:col-span-2"
+								: id === "weekOverview"
+								  ? "md:col-span-3"
+								  : undefined
+						}
+						renderItem={(id) => {
+							switch (id) {
+								case "calendar":
+									return <CompactCalendar userId={user.id} />;
+								case "todayImportant":
+									return <TodayImportant userId={user.id} />;
+								case "todayAtUni":
+									return <TodayAtUni userId={user.id} />;
+								case "stressOverview":
+									return <StressOverview />;
+								case "weekOverview":
+									return <WeekOverview userId={user.id} />;
+								default:
+									return null;
+							}
+						}}
+					/>
+				) : null}
+				{user?.id ? (
+					<DraggableGrid
+						items={[
+							"learningProgress" as const,
+							"learningCheckIns" as const,
+							"progressInsights" as const,
+						]}
+						className="grid gap-6 md:grid-cols-3"
+						renderItem={(id) => {
+							switch (id) {
+								case "learningProgress":
+									return <LearningProgress />;
+								case "learningCheckIns":
+									return <LearningCheckIns />;
+								case "progressInsights":
+									return <ProgressInsights />;
+								default:
+									return null;
+							}
+						}}
+					/>
+				) : null}
 
 				<div>
 					<h3 className="mb-4 text-lg font-semibold">Your Progress</h3>
