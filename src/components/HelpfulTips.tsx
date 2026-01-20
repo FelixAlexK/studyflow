@@ -57,7 +57,7 @@ export default function HelpfulTips() {
 	}, [seed]);
 
 	return (
-		<Card className="col-span-full border-dashed border-muted-foreground/30 bg-muted/30">
+		<Card className="col-span-full border-dashed border-muted-foreground/30 bg-muted/30" aria-live="polite" role="status">
 			<CardHeader className="flex flex-row items-start justify-between gap-2">
 				<div className="flex items-center gap-2">
 					<div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
@@ -70,6 +70,7 @@ export default function HelpfulTips() {
 					size="sm"
 					className="text-xs"
 					onClick={() => setSeed(Math.random())}
+					aria-label="Neuen Tipp anzeigen"
 				>
 					Neuer Tipp
 				</Button>
