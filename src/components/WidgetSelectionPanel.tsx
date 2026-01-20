@@ -144,6 +144,9 @@ type WidgetSelectionPanelProps = {
   onAddPrimary: (id: PrimaryId) => void;
   onAddDaily: (id: DailyId) => void;
   onAddLearning: (id: LearningId) => void;
+  onRemovePrimary: (id: PrimaryId) => void;
+  onRemoveDaily: (id: DailyId) => void;
+  onRemoveLearning: (id: LearningId) => void;
   hasUser: boolean;
 };
 
@@ -156,6 +159,9 @@ export default function WidgetSelectionPanel({
   onAddPrimary,
   onAddDaily,
   onAddLearning,
+  onRemovePrimary,
+  onRemoveDaily,
+  onRemoveLearning,
   hasUser,
 }: WidgetSelectionPanelProps) {
   const isWidgetEnabled = (widgetId: string, category: WidgetCategory): boolean => {
@@ -185,6 +191,20 @@ export default function WidgetSelectionPanel({
     }
   };
 
+  const handleRemoveWidget = (widgetId: string, category: WidgetCategory) => {
+    switch (category) {
+      case "primary":
+        onRemovePrimary(widgetId as PrimaryId);
+        break;
+      case "daily":
+        onRemoveDaily(widgetId as DailyId);
+        break;
+      case "learning":
+        onRemoveLearning(widgetId as LearningId);
+        break;
+    }
+  };
+
   const primaryWidgets = WIDGET_CATALOG.filter((w) => w.category === "primary");
   const dailyWidgets = WIDGET_CATALOG.filter((w) => w.category === "daily");
   const learningWidgets = WIDGET_CATALOG.filter((w) => w.category === "learning");
@@ -206,15 +226,26 @@ export default function WidgetSelectionPanel({
               <p className="text-sm text-muted-foreground leading-relaxed">{widget.description}</p>
             </div>
           </div>
-          <Button
-            size="sm"
-            variant={enabled ? "secondary" : "default"}
-            disabled={enabled || (requiresAuth && !hasUser)}
-            onClick={() => handleAddWidget(widget.id, widget.category)}
-            className="shrink-0"
-          >
-            {enabled ? "Added" : "Add"}
-          </Button>
+          {enabled ? (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => handleRemoveWidget(widget.id, widget.category)}
+              className="shrink-0"
+            >
+              Remove
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="default"
+              disabled={requiresAuth && !hasUser}
+              onClick={() => handleAddWidget(widget.id, widget.category)}
+              className="shrink-0"
+            >
+              Add
+            </Button>
+          )}
         </div>
       </div>
     );

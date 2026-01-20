@@ -16,7 +16,6 @@ import ProductivityOverview from "@/components/ProductivityOverview";
 import ProgressInsights from "@/components/ProgressInsights";
 import QuickActionButtons from "@/components/QuickActionButtons";
 import QuickFocusTimer from "@/components/QuickFocusTimer";
-import RemovableWidget from "@/components/RemovableWidget";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
 import TodayImportant from "@/components/TodayImportant";
@@ -120,11 +119,7 @@ function DashboardPage() {
 									return null;
 							}
 						})();
-						return (
-							<RemovableWidget onRemove={() => removePrimary(id)}>
-								{content}
-							</RemovableWidget>
-						);
+						return content;
 					}}
 				/>
 				{user?.id ? (
@@ -158,11 +153,7 @@ function DashboardPage() {
 											return null;
 									}
 								})();
-								return (
-									<RemovableWidget onRemove={() => removeDaily(id)}>
-										{content}
-									</RemovableWidget>
-								);
+								return content;
 							}}
 						/>
 					</>
@@ -194,11 +185,7 @@ function DashboardPage() {
 											return null;
 									}
 								})();
-								return (
-									<RemovableWidget onRemove={() => removeLearning(id)}>
-										{content}
-									</RemovableWidget>
-								);
+								return content;
 							}}
 						/>
 					</>
@@ -216,6 +203,9 @@ function DashboardPage() {
 				onAddPrimary={addPrimary}
 				onAddDaily={addDaily}
 				onAddLearning={addLearning}
+				onRemovePrimary={removePrimary}
+				onRemoveDaily={removeDaily}
+				onRemoveLearning={removeLearning}
 				hasUser={!!user?.id}
 			/>
 		</AppLayout>
