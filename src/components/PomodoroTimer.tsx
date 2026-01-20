@@ -2,7 +2,7 @@
 
 import { useConvexMutation } from "@convex-dev/react-query";
 import { Loader2, Pause, Play, RotateCcw } from "lucide-react";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -33,6 +33,18 @@ export default function PomodoroTimer() {
 	const logFocusSession = useConvexMutation(api.stats.logFocusSession);
 
 	const [timer, setTimer] = useState<TimerState>(() => {
+		// Try to load from localStorage synchronously
+		if (typeof window !== "undefined") {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			if (stored) {
+				try {
+					const parsed = JSON.parse(stored) as TimerState;
+					return parsed;
+				} catch {
+					// Fall through to defaults
+				}
+			}
+		}
 		const focusDuration = DEFAULT_FOCUS;
 		return {
 			mode: "focus",
@@ -78,23 +90,58 @@ export default function PomodoroTimer() {
 
 	const [editMode, setEditMode] = useState(false);
 
-	// Restore full timer state from localStorage on mount (before paint to avoid flash)
-	useLayoutEffect(() => {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (stored) {
-			try {
-				const parsed = JSON.parse(stored) as TimerState;
-				setTimer(parsed);
-			} catch {
-				// Ignore corrupted data
-			}
-		}
-	}, []);
-
 	// Persist to localStorage whenever timer changes
 	useEffect(() => {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
+		// Dispatch custom event for same-page sync
+		window.dispatchEvent(new CustomEvent("timer-sync", { detail: { state: timer, source: "pomodoro" } }));
 	}, [timer]);
+
+	// Listen for storage changes from other tabs and poll localStorage
+	useEffect(() => {
+		let lastStoredValue = localStorage.getItem(STORAGE_KEY);
+	
+		const handleStorageChange = (e: StorageEvent) => {
+			if (e.key === STORAGE_KEY && e.newValue) {
+				try {
+					const parsed = JSON.parse(e.newValue) as TimerState;
+					setTimer(parsed);
+					lastStoredValue = e.newValue;
+				} catch {
+					// Ignore invalid data
+				}
+			}
+		};
+
+		const handleCustomSync = (e: Event) => {
+			const customEvent = e as CustomEvent<{ state: TimerState; source: string }>;
+			if (customEvent.detail && customEvent.detail.source !== "pomodoro") {
+				setTimer(customEvent.detail.state);
+			}
+		};
+
+		// Poll localStorage every 500ms for changes from other pages
+		const pollInterval = setInterval(() => {
+			const currentValue = localStorage.getItem(STORAGE_KEY);
+			if (currentValue && currentValue !== lastStoredValue) {
+				try {
+					const parsed = JSON.parse(currentValue) as TimerState;
+					setTimer(parsed);
+					lastStoredValue = currentValue;
+				} catch {
+					// Ignore invalid data
+				}
+			}
+		}, 500);
+
+		window.addEventListener("storage", handleStorageChange);
+		window.addEventListener("timer-sync", handleCustomSync);
+		return () => {
+			clearInterval(pollInterval);
+			window.removeEventListener("storage", handleStorageChange);
+			window.removeEventListener("timer-sync", handleCustomSync);
+		};
+	}, []);
 
 	// Timer tick effect
 	useEffect(() => {

@@ -10,6 +10,7 @@ import LearningProgress from "@/components/LearningProgress";
 import { OnboardingFlow, useOnboarding } from "@/components/OnboardingFlow";
 import PriorityTasks from "@/components/PriorityTasks";
 import ProductivityOverview from "@/components/ProductivityOverview";
+import QuickFocusTimer from "@/components/QuickFocusTimer";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
 import TodayImportant from "@/components/TodayImportant";
@@ -54,8 +55,15 @@ function DashboardPage() {
 					</p>
 				</div>
 				{user?.id ? <HeroStats /> : null}
-				{user?.id ? <PriorityTasks /> : null}{" "}
-				{user?.id ? <CompactCalendar userId={user.id} /> : null}{" "}
+				<div className="grid gap-6 md:grid-cols-3">
+					{user?.id ? (
+						<div className="md:col-span-2">
+							<PriorityTasks />
+						</div>
+					) : null}
+					<QuickFocusTimer />
+				</div>
+				{user?.id ? <CompactCalendar userId={user.id} /> : null}
 				{user?.id ? <TodayImportant userId={user.id} /> : null}
 				{user?.id ? <TodayAtUni userId={user.id} /> : null}
 				{user?.id ? <StressOverview /> : null}
