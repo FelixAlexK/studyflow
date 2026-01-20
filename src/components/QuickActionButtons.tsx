@@ -116,7 +116,7 @@ export default function QuickActionButtons() {
 
 	return (
 		<>
-			<Card className="col-span-full">
+			<Card id="quick-actions" className="col-span-full">
 				<CardHeader>
 					<CardTitle>Quick Actions</CardTitle>
 					<CardDescription>
