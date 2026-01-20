@@ -10,6 +10,7 @@ import LearningProgress from "@/components/LearningProgress";
 import { OnboardingFlow, useOnboarding } from "@/components/OnboardingFlow";
 import PriorityTasks from "@/components/PriorityTasks";
 import ProductivityOverview from "@/components/ProductivityOverview";
+import ProgressInsights from "@/components/ProgressInsights";
 import QuickFocusTimer from "@/components/QuickFocusTimer";
 import StressOverview from "@/components/StressOverview";
 import TodayAtUni from "@/components/TodayAtUni";
@@ -69,8 +70,7 @@ function DashboardPage() {
 				{user?.id ? <StressOverview /> : null}
 				{user?.id ? <WeekOverview userId={user.id} /> : null}
 				{user?.id ? <LearningProgress /> : null}
-				{user?.id ? <LearningCheckIns /> : null}
-				<div>
+				{user?.id ? <LearningCheckIns /> : null}			{user?.id ? <ProgressInsights /> : null}				<div>
 					<h3 className="mb-4 text-lg font-semibold">Your Progress</h3>
 					<ProductivityOverview />
 				</div>
