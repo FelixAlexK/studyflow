@@ -93,47 +93,49 @@ export function useDashboardLayout(
   const enabledDailyKey = userId ? `dashboard:enabled:daily:${userId}` : undefined;
   const enabledLearningKey = userId ? `dashboard:enabled:learning:${userId}` : undefined;
 
+  // Ensure defaults are arrays
+  const safePrimaryDefaults = Array.isArray(defaults.primary) ? defaults.primary : [];
+  const safeDailyDefaults = Array.isArray(defaults.daily) ? defaults.daily : [];
+  const safeLearningDefaults = Array.isArray(defaults.learning) ? defaults.learning : [];
 
-  const enabledPrimary = React.useMemo(() => {
-    if (!enabledPrimaryKey) return [] as PrimaryId[];
-    try {
-      const raw = localStorage.getItem(enabledPrimaryKey);
-      return raw ? (JSON.parse(raw) as PrimaryId[]) : ([] as PrimaryId[]);
-    } catch {
-      return [] as PrimaryId[];
-    }
-  }, [enabledPrimaryKey]);
-  const enabledDaily = React.useMemo(() => {
-    if (!enabledDailyKey) return [] as DailyId[];
-    try {
-      const raw = localStorage.getItem(enabledDailyKey);
-      return raw ? (JSON.parse(raw) as DailyId[]) : ([] as DailyId[]);
-    } catch {
-      return [] as DailyId[];
-    }
-  }, [enabledDailyKey]);
-  const enabledLearning = React.useMemo(() => {
-    if (!enabledLearningKey) return [] as LearningId[];
-    try {
-      const raw = localStorage.getItem(enabledLearningKey);
-      return raw ? (JSON.parse(raw) as LearningId[]) : ([] as LearningId[]);
-    } catch {
-      return [] as LearningId[];
-    }
-  }, [enabledLearningKey]);
+  // Use a single update counter to force re-renders when needed
+  const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
 
-  const availablePrimary = React.useMemo(
-    () => Array.from(new Set([...(defaults.primary ?? []), ...enabledPrimary])),
-    [defaults.primary, enabledPrimary],
-  );
-  const availableDaily = React.useMemo(
-    () => Array.from(new Set([...(defaults.daily ?? []), ...enabledDaily])),
-    [defaults.daily, enabledDaily],
-  );
-  const availableLearning = React.useMemo(
-    () => Array.from(new Set([...(defaults.learning ?? []), ...enabledLearning])),
-    [defaults.learning, enabledLearning],
-  );
+  // Helper to read from localStorage
+  const readFromStorage = React.useCallback(<T extends string>(key: string | undefined): T[] => {
+    if (!key) return [] as T[];
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as T[]) : ([] as T[]);
+    } catch {
+      return [] as T[];
+    }
+  }, []);
+
+  const enabledPrimary = readFromStorage<PrimaryId>(enabledPrimaryKey);
+  const enabledDaily = readFromStorage<DailyId>(enabledDailyKey);
+  const enabledLearning = readFromStorage<LearningId>(enabledLearningKey);
+
+  const removedPrimaryKey = userId ? `dashboard:removed:primary:${userId}` : undefined;
+  const removedDailyKey = userId ? `dashboard:removed:daily:${userId}` : undefined;
+  const removedLearningKey = userId ? `dashboard:removed:learning:${userId}` : undefined;
+
+  const removedPrimary = readFromStorage<PrimaryId>(removedPrimaryKey);
+  const removedDaily = readFromStorage<DailyId>(removedDailyKey);
+  const removedLearning = readFromStorage<LearningId>(removedLearningKey);
+
+  const availablePrimary = React.useMemo(() => {
+    const base = Array.from(new Set([...safePrimaryDefaults, ...enabledPrimary]));
+    return base.filter((id) => !(removedPrimary || []).includes(id));
+  }, [safePrimaryDefaults, enabledPrimary, removedPrimary]);
+  const availableDaily = React.useMemo(() => {
+    const base = Array.from(new Set([...safeDailyDefaults, ...enabledDaily]));
+    return base.filter((id) => !(removedDaily || []).includes(id));
+  }, [safeDailyDefaults, enabledDaily, removedDaily]);
+  const availableLearning = React.useMemo(() => {
+    const base = Array.from(new Set([...safeLearningDefaults, ...enabledLearning]));
+    return base.filter((id) => !(removedLearning || []).includes(id));
+  }, [safeLearningDefaults, enabledLearning, removedLearning]);
 
   const [primaryOrder, setPrimaryOrder] = usePersistentOrder<PrimaryId>(primaryKey, availablePrimary);
   const [dailyOrder, setDailyOrder] = usePersistentOrder<DailyId>(dailyKey, availableDaily);
@@ -146,22 +148,94 @@ export function useDashboardLayout(
       const current: T[] = raw ? (JSON.parse(raw) as T[]) : [];
       const next = Array.from(new Set([...current, id]));
       localStorage.setItem(key, JSON.stringify(next));
+      forceUpdate(); // Trigger re-render
     } catch {
       // ignore
     }
   }
 
+  function removeWidget<T extends string>(
+    removedKey: string | undefined,
+    orderKey: string | undefined,
+    id: T,
+    setOrder: (order: T[]) => void,
+    order: T[]
+  ) {
+    // Add to removed list
+    if (removedKey) {
+      try {
+        const raw = localStorage.getItem(removedKey);
+        const current: T[] = raw ? (JSON.parse(raw) as T[]) : [];
+        const next = Array.from(new Set([...current, id]));
+        localStorage.setItem(removedKey, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+    }
+    
+    // Update order to remove the widget
+    const updatedOrder = order.filter((item) => item !== id);
+    setOrder(updatedOrder);
+    
+    // Also update localStorage order to persist the removal immediately
+    if (orderKey) {
+      try {
+        localStorage.setItem(orderKey, JSON.stringify(updatedOrder));
+      } catch {
+        // ignore
+      }
+    }
+    
+    forceUpdate(); // Trigger re-render
+  }
+
   function addPrimary(id: PrimaryId) {
     if (!primaryOrder.includes(id)) setPrimaryOrder([...primaryOrder, id]);
     addEnabled(enabledPrimaryKey, id);
+    // Remove from removed list if it was there
+    if (removedPrimaryKey) {
+      try {
+        const raw = localStorage.getItem(removedPrimaryKey);
+        const current: PrimaryId[] = raw ? (JSON.parse(raw) as PrimaryId[]) : [];
+        const next = current.filter(item => item !== id);
+        localStorage.setItem(removedPrimaryKey, JSON.stringify(next));
+        forceUpdate();
+      } catch {
+        // ignore
+      }
+    }
   }
   function addDaily(id: DailyId) {
     if (!dailyOrder.includes(id)) setDailyOrder([...dailyOrder, id]);
     addEnabled(enabledDailyKey, id);
+    // Remove from removed list if it was there
+    if (removedDailyKey) {
+      try {
+        const raw = localStorage.getItem(removedDailyKey);
+        const current: DailyId[] = raw ? (JSON.parse(raw) as DailyId[]) : [];
+        const next = current.filter(item => item !== id);
+        localStorage.setItem(removedDailyKey, JSON.stringify(next));
+        forceUpdate();
+      } catch {
+        // ignore
+      }
+    }
   }
   function addLearning(id: LearningId) {
     if (!learningOrder.includes(id)) setLearningOrder([...learningOrder, id]);
     addEnabled(enabledLearningKey, id);
+    // Remove from removed list if it was there
+    if (removedLearningKey) {
+      try {
+        const raw = localStorage.getItem(removedLearningKey);
+        const current: LearningId[] = raw ? (JSON.parse(raw) as LearningId[]) : [];
+        const next = current.filter(item => item !== id);
+        localStorage.setItem(removedLearningKey, JSON.stringify(next));
+        forceUpdate();
+      } catch {
+        // ignore
+      }
+    }
   }
 
   return {
@@ -174,5 +248,14 @@ export function useDashboardLayout(
     addPrimary,
     addDaily,
     addLearning,
+    removePrimary: (id: PrimaryId) => {
+      removeWidget(removedPrimaryKey, primaryKey, id, setPrimaryOrder, primaryOrder);
+    },
+    removeDaily: (id: DailyId) => {
+      removeWidget(removedDailyKey, dailyKey, id, setDailyOrder, dailyOrder);
+    },
+    removeLearning: (id: LearningId) => {
+      removeWidget(removedLearningKey, learningKey, id, setLearningOrder, learningOrder);
+    },
   };
 }

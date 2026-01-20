@@ -42,9 +42,12 @@ export function DraggableGrid<T extends string>({
     return true;
   }, []);
 
+  // Always sync with parent items when they change
   React.useEffect(() => {
-    setOrder((prev) => (arraysEqual(prev, items) ? prev : items));
-  }, [items, arraysEqual]);
+    if (!arraysEqual(order, items)) {
+      setOrder(items);
+    }
+  }, [items, order, arraysEqual]);
 
   const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
 
@@ -82,16 +85,35 @@ function SortableCard<T extends string>({ id, className, children }: { id: T; cl
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
-    cursor: "grab",
   };
 
+  // Create safe listeners that don't interfere with interactive elements
+  const safeListeners = React.useMemo(() => {
+    if (!listeners) return {};
+    const { onPointerDown, ...rest } = listeners;
+    return {
+      onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        // Don't start drag if clicking on interactive elements
+        if (target.closest("button, a, input, textarea, [role='button']")) {
+          return;
+        }
+        // Allow drag for card area
+        onPointerDown?.(e);
+      },
+      ...rest,
+    };
+  }, [listeners]);
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={className}>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-        <div className="p-2 md:p-0">
-          {children}
-        </div>
-      </div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...safeListeners}
+      className={className}
+    >
+      {children}
     </div>
   );
 }
