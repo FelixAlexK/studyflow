@@ -175,3 +175,81 @@ export const getTodayStats = query({
     };
   },
 });
+
+// Query: get completed tasks for past weeks (for progress insights)
+export const getProgressInsights = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const allTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    const completedTasks = allTasks.filter((t) => t.status === "done");
+
+    // Get current date at start of day
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+
+    // Get day of week (0 = Sunday, 1 = Monday, etc.)
+    const dayOfWeek = now.getDay();
+    // Calculate start of current week (Monday)
+    const startOfWeek = startOfToday - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60 * 60 * 1000;
+    // Start of last week
+    const startOfLastWeek = startOfWeek - 7 * 24 * 60 * 60 * 1000;
+
+    // Count completed tasks this week
+    const thisWeekCompleted = completedTasks.filter((task) => {
+      const taskTime = new Date(task.dueDate).getTime();
+      return taskTime >= startOfWeek && taskTime < startOfToday + 24 * 60 * 60 * 1000;
+    }).length;
+
+    // Count completed tasks last week
+    const lastWeekCompleted = completedTasks.filter((task) => {
+      const taskTime = new Date(task.dueDate).getTime();
+      return taskTime >= startOfLastWeek && taskTime < startOfWeek;
+    }).length;
+
+    // Get tasks completed by day for this week
+    const dayData: Array<{ day: string; count: number; date: string }> = [];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    for (let i = 0; i < 7; i++) {
+      const dayStart = startOfWeek + i * 24 * 60 * 60 * 1000;
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      const dayDate = new Date(dayStart);
+      const count = completedTasks.filter((task) => {
+        const taskTime = new Date(task.dueDate).getTime();
+        return taskTime >= dayStart && taskTime < dayEnd;
+      }).length;
+      
+      dayData.push({
+        day: days[i],
+        count,
+        date: dayDate.toISOString().split('T')[0],
+      });
+    }
+
+    // Calculate trend
+    const trend = lastWeekCompleted > 0 
+      ? ((thisWeekCompleted - lastWeekCompleted) / lastWeekCompleted * 100).toFixed(1)
+      : (thisWeekCompleted > 0 ? "100" : "0");
+
+    return {
+      thisWeek: thisWeekCompleted,
+      lastWeek: lastWeekCompleted,
+      trend: parseFloat(trend as string),
+      weeklyBreakdown: dayData,
+      totalCompleted: completedTasks.length,
+    };
+  },
+});
