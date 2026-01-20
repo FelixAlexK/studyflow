@@ -2,6 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { getAuth } from "@workos/authkit-tanstack-react-start";
+import AddWidgetButton from "@/components/AddWidgetButton";
 import AppLayout from "@/components/AppLayout";
 import CompactCalendar from "@/components/CompactCalendar";
 import DraggableGrid from "@/components/DraggableGrid";
@@ -64,8 +65,17 @@ function DashboardPage() {
 		],
 	};
 
-	const { primaryOrder, setPrimaryOrder, dailyOrder, setDailyOrder, learningOrder, setLearningOrder } =
-		useDashboardLayout(user?.id, defaults);
+	const {
+		primaryOrder,
+		setPrimaryOrder,
+		dailyOrder,
+		setDailyOrder,
+		learningOrder,
+		setLearningOrder,
+		addPrimary,
+		addDaily,
+		addLearning,
+	} = useDashboardLayout(user?.id, defaults);
 
 	return (
 		<AppLayout headerTitle={`Welcome, ${user?.firstName || "User"}`}>
@@ -85,6 +95,18 @@ function DashboardPage() {
 				{user?.id ? <HeroStats /> : null}
 				{user?.id ? <QuickActionButtons /> : null}
 				{user?.id ? <HelpfulTips /> : null}
+				<div className="flex items-center justify-between">
+					<h3 className="text-lg font-semibold">Focus & Tasks</h3>
+					<AddWidgetButton
+						sectionLabel="Focus & Tasks"
+						existingIds={primaryOrder}
+						options={[
+							{ id: "quickActions" as const, title: "Quick Actions", description: "Shortcut buttons for common tasks" },
+							{ id: "helpfulTips" as const, title: "Helpful Tips", description: "Contextual productivity tips" },
+						]}
+						onAdd={(id) => addPrimary(id)}
+					/>
+				</div>
 				<DraggableGrid
 					items={primaryOrder}
 					className="grid gap-6 md:grid-cols-3"
@@ -95,59 +117,102 @@ function DashboardPage() {
 							case "priority":
 								return <PriorityTasks />;
 							case "timer":
+							case "quickActions":
+								return <QuickActionButtons />;
+							case "helpfulTips":
+								return <HelpfulTips />;
 							default:
 								return <QuickFocusTimer />;
 						}
 					}}
 				/>
 				{user?.id ? (
-					<DraggableGrid
-						items={dailyOrder}
-						className="grid gap-6 md:grid-cols-3"
-						getItemClassName={(id) =>
-							id === "calendar"
-								? "md:col-span-2"
-								: id === "weekOverview"
-								  ? "md:col-span-3"
-								  : undefined
-						}
-						onOrderChange={setDailyOrder}
-						renderItem={(id) => {
-							switch (id) {
-								case "calendar":
-									return <CompactCalendar userId={user.id} />;
-								case "todayImportant":
-									return <TodayImportant userId={user.id} />;
-								case "todayAtUni":
-									return <TodayAtUni userId={user.id} />;
-								case "stressOverview":
-									return <StressOverview />;
-								case "weekOverview":
-									return <WeekOverview userId={user.id} />;
-								default:
-									return null;
+					<>
+						<div className="flex items-center justify-between">
+							<h3 className="text-lg font-semibold">Daily Overview</h3>
+							<AddWidgetButton
+								sectionLabel="Daily Overview"
+								existingIds={dailyOrder}
+								options={[
+									{ id: "calendar" as const, title: "Calendar Preview" },
+									{ id: "todayImportant" as const, title: "Today Important" },
+									{ id: "todayAtUni" as const, title: "Today at Uni" },
+									{ id: "stressOverview" as const, title: "Stress Overview" },
+									{ id: "weekOverview" as const, title: "Week Overview" },
+								]}
+								onAdd={(id) => addDaily(id)}
+							/>
+						</div>
+						<DraggableGrid
+							items={dailyOrder}
+							className="grid gap-6 md:grid-cols-3"
+							getItemClassName={(id) =>
+								id === "calendar"
+									? "md:col-span-2"
+									: id === "weekOverview"
+									  ? "md:col-span-3"
+									  : undefined
 							}
-						}}
-					/>
+							onOrderChange={setDailyOrder}
+							renderItem={(id) => {
+								switch (id) {
+									case "calendar":
+										return <CompactCalendar userId={user.id} />;
+									case "todayImportant":
+										return <TodayImportant userId={user.id} />;
+									case "todayAtUni":
+										return <TodayAtUni userId={user.id} />;
+									case "stressOverview":
+										return <StressOverview />;
+									case "weekOverview":
+										return <WeekOverview userId={user.id} />;
+									default:
+										return null;
+								}
+							}}
+						/>
+					</>
 				) : null}
 				{user?.id ? (
-					<DraggableGrid
-						items={learningOrder}
-						className="grid gap-6 md:grid-cols-3"
-						onOrderChange={setLearningOrder}
-						renderItem={(id) => {
-							switch (id) {
-								case "learningProgress":
-									return <LearningProgress />;
-								case "learningCheckIns":
-									return <LearningCheckIns />;
-								case "progressInsights":
-									return <ProgressInsights />;
-								default:
-									return null;
-							}
-						}}
-					/>
+					<>
+						<div className="flex items-center justify-between">
+							<h3 className="text-lg font-semibold">Learning & Insights</h3>
+							<AddWidgetButton
+								sectionLabel="Learning & Insights"
+								existingIds={learningOrder}
+								options={[
+									{ id: "learningProgress" as const, title: "Learning Progress" },
+									{ id: "learningCheckIns" as const, title: "Learning Check-Ins" },
+									{ id: "progressInsights" as const, title: "Progress Insights" },
+									{ id: "heroStats" as const, title: "Stats Card" },
+									{ id: "productivityOverview" as const, title: "Productivity Overview" },
+								]}
+								onAdd={(id) => addLearning(id)}
+							/>
+						</div>
+						<DraggableGrid
+							items={learningOrder}
+							className="grid gap-6 md:grid-cols-3"						getItemClassName={(id) =>
+							id === "heroStats" || id === "productivityOverview" ? "md:col-span-3" : undefined
+						}							onOrderChange={setLearningOrder}
+							renderItem={(id) => {
+								switch (id) {
+									case "learningProgress":
+										return <LearningProgress />;
+									case "learningCheckIns":
+										return <LearningCheckIns />;
+									case "progressInsights":
+										return <ProgressInsights />;
+									case "heroStats":
+										return <HeroStats />;
+									case "productivityOverview":
+										return <ProductivityOverview />;
+									default:
+										return null;
+								}
+							}}
+						/>
+					</>
 				) : null}
 
 				<div>
