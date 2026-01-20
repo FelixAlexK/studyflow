@@ -143,6 +143,8 @@ export default function QuickActionButtons() {
 						</Button>
 						<Button
 							onClick={handleToggleTimer}
+							aria-pressed={timer.isRunning}
+							aria-label={timer.isRunning ? "Fokus pausieren" : "Fokus starten"}
 							className={`flex items-center justify-center gap-2 h-12 transition-all ${
 								timer.isRunning
 									? "bg-amber-600 hover:bg-amber-700"
@@ -150,9 +152,9 @@ export default function QuickActionButtons() {
 							}`}
 						>
 							{timer.isRunning ? (
-								<Pause className="h-5 w-5" />
+								<Pause className="h-5 w-5" aria-hidden="true" />
 							) : (
-								<Play className="h-5 w-5" />
+								<Play className="h-5 w-5" aria-hidden="true" />
 							)}
 							<span>{timer.isRunning ? "Pause Focus" : "Start Focus"}</span>
 						</Button>
